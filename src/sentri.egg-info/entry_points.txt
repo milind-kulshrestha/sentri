@@ -1,2 +1,0 @@
-[console_scripts]
-dq-check = data_quality.cli:main
