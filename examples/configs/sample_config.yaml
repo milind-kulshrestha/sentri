@@ -1,0 +1,124 @@
+# Sample Data Quality Framework Configuration
+# This demonstrates all available check types and configuration options
+
+source:
+  type: csv
+  csv:
+    file_path: /data/sample_data.csv
+    date_column: effective_date
+    encoding: utf-8
+    delimiter: ","
+
+metadata:
+  dq_check_name: "Sample DQ Check"
+  date_column: effective_date
+  id_column: entity_id
+  description: "Sample data quality validation"
+
+checks:
+  # Completeness Check - Monitor null/missing values
+  completeness:
+    value:
+      thresholds:
+        absolute_critical: 0.05
+        absolute_warning: 0.02
+      description: "Value column completeness"
+
+    category:
+      thresholds:
+        absolute_critical: 0.10
+      filter_condition: "universe == 'US'"
+      column_alias: category_us
+      description: "Category completeness for US universe"
+
+  # Uniqueness Check - Detect duplicates
+  uniqueness:
+    entity_id:
+      thresholds:
+        absolute_critical: 0
+      description: "Entity ID must be unique"
+
+  # Range Check - Validate value bounds
+  range:
+    score:
+      min_value: 0
+      max_value: 100
+      description: "Score must be between 0 and 100"
+
+    percentage:
+      min_value: 0
+      max_value: 1
+      description: "Percentage must be between 0 and 1"
+
+  # Turnover Check - Track ID additions/removals
+  turnover:
+    entity_id:
+      thresholds:
+        absolute_critical: 0.15
+        absolute_warning: 0.10
+      description: "Entity turnover rate"
+
+  # Value Spike Check - Detect abnormal changes
+  value_spike:
+    value:
+      thresholds:
+        absolute_critical: 10.0
+        absolute_warning: 5.0
+      description: "Value spike detection"
+
+  # Frequency Check - Monitor category distribution
+  frequency:
+    category:
+      thresholds:
+        absolute_critical: 0.10
+        absolute_warning: 0.05
+      description: "Category frequency stability"
+
+  # Statistical Check - Monitor statistical properties
+  statistical:
+    value:
+      measures:
+        - mean
+        - std
+        - median
+      thresholds:
+        mean:
+          absolute_critical: [50, 150]
+        std:
+          absolute_critical: 50
+      description: "Value statistical measures"
+
+  # Correlation Check - Validate temporal correlation
+  correlation:
+    value:
+      thresholds:
+        absolute_critical: 0.80
+      correlation_type: temporal
+      description: "Value temporal correlation"
+
+  # Distribution Check - Detect distribution shifts
+  distribution:
+    value:
+      thresholds:
+        absolute_critical: 0.05
+      description: "Value distribution stability (KS test)"
+
+  # Drift Check - Identify gradual drift (PSI)
+  drift:
+    value:
+      thresholds:
+        absolute_critical: 0.25
+        absolute_warning: 0.10
+      description: "Value drift detection (PSI)"
+
+output:
+  formats:
+    - json
+    - html
+    - csv
+  destination: /output/dq_reports
+  file_prefix: sample_dq
+  include_timestamp: true
+  include_check_name: true
+  include_passed_checks: true
+  pretty_print: true
