@@ -89,7 +89,10 @@ class DataConnector(ABC):
         raise
 
     def retry_with_backoff(
-        self, func: Callable[[], Any], max_attempts: int = 3, backoff_factor: float = 2.0
+        self,
+        func: Callable[[], Any],
+        max_attempts: int = 3,
+        backoff_factor: float = 2.0,
     ) -> Any:
         """
         Retry a function with exponential backoff.
