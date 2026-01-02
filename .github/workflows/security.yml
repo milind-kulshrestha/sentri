@@ -32,9 +32,9 @@ jobs:
     
     - name: Run safety check
       run: |
-        pip freeze > requirements.txt
-        safety scan --target requirements.txt --output json > safety-report.json || true
-        safety scan --target requirements.txt
+        pip install -e .
+        safety scan --output json > safety-report.json || true
+        safety scan
     
     - name: Upload security artifacts
       uses: actions/upload-artifact@v4

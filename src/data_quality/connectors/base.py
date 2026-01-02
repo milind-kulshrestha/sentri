@@ -2,7 +2,7 @@
 
 import time
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional
+from typing import Any, Callable, Dict, Optional
 
 import pandas as pd
 
@@ -89,7 +89,7 @@ class DataConnector(ABC):
         raise
 
     def retry_with_backoff(
-        self, func: callable, max_attempts: int = 3, backoff_factor: float = 2.0
+        self, func: Callable[[], Any], max_attempts: int = 3, backoff_factor: float = 2.0
     ) -> Any:
         """
         Retry a function with exponential backoff.
@@ -105,7 +105,7 @@ class DataConnector(ABC):
         Raises:
             Exception: The last exception if all retries fail
         """
-        last_exception = None
+        last_exception: Optional[Exception] = None
         delay = 1.0
 
         for attempt in range(max_attempts):
@@ -121,7 +121,9 @@ class DataConnector(ABC):
                     time.sleep(delay)
                     delay *= backoff_factor
 
-        raise last_exception
+        if last_exception is not None:
+            raise last_exception
+        raise RuntimeError("Retry failed with no exception captured")
 
     def _normalize_dataframe(self, df: pd.DataFrame) -> pd.DataFrame:
         """
