@@ -6,7 +6,7 @@ from typing import Dict, Any
 
 class CheckStatus(str, Enum):
     """Status of a data quality check."""
-    PASS = "PASS"
+    PASS = "PASS"  # nosec B105
     WARNING = "WARNING"
     FAIL = "FAIL"
     ERROR = "ERROR"
