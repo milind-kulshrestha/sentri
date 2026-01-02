@@ -24,7 +24,7 @@ class AlertPlugin(ABC):
         self,
         results: Dict[str, Any],
         failed_checks: List[Dict[str, Any]],
-        warning_checks: List[Dict[str, Any]]
+        warning_checks: List[Dict[str, Any]],
     ) -> bool:
         """
         Send alert based on check results.
@@ -40,9 +40,7 @@ class AlertPlugin(ABC):
         pass
 
     def should_alert(
-        self,
-        failed_checks: List[Dict[str, Any]],
-        warning_checks: List[Dict[str, Any]]
+        self, failed_checks: List[Dict[str, Any]], warning_checks: List[Dict[str, Any]]
     ) -> bool:
         """
         Determine if an alert should be sent.
@@ -54,8 +52,8 @@ class AlertPlugin(ABC):
         Returns:
             bool: True if alert should be sent
         """
-        alert_on_warning = self.config.get('alert_on_warning', False)
-        alert_on_failure = self.config.get('alert_on_failure', True)
+        alert_on_warning = self.config.get("alert_on_warning", False)
+        alert_on_failure = self.config.get("alert_on_failure", True)
 
         if alert_on_failure and failed_checks:
             return True

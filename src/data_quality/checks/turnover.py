@@ -1,10 +1,11 @@
 """Turnover check implementation."""
 
 from typing import Any, Dict, List, Set
+
 import pandas as pd
 
 from data_quality.checks.base import BaseCheck
-from data_quality.utils.constants import CheckStatus, MAX_SAMPLE_SIZE
+from data_quality.utils.constants import MAX_SAMPLE_SIZE, CheckStatus
 
 
 class TurnoverCheck(BaseCheck):
@@ -25,7 +26,7 @@ class TurnoverCheck(BaseCheck):
         results = []
 
         for column, config in self.check_config.items():
-            if not config.get('enabled', True):
+            if not config.get("enabled", True):
                 continue
 
             try:
@@ -33,7 +34,7 @@ class TurnoverCheck(BaseCheck):
                 results.append(result)
             except Exception as e:
                 error_result = self._handle_column_error(
-                    column, e, {'check': 'turnover'}
+                    column, e, {"check": "turnover"}
                 )
                 results.append(error_result)
 
@@ -51,13 +52,13 @@ class TurnoverCheck(BaseCheck):
             Dict: Check result
         """
         # Apply filter if specified
-        df = self._apply_filter(self.df, config.get('filter_condition'))
+        df = self._apply_filter(self.df, config.get("filter_condition"))
 
         if column not in df.columns:
             return self._handle_column_error(
                 column,
                 ValueError(f"Column '{column}' not found in DataFrame"),
-                {'available_columns': list(df.columns)}
+                {"available_columns": list(df.columns)},
             )
 
         # Get unique dates sorted
@@ -67,25 +68,33 @@ class TurnoverCheck(BaseCheck):
             # Need at least 2 dates for turnover comparison
             return self._create_result_record(
                 column=column,
-                date=dates[-1].strftime('%Y-%m-%d') if dates else pd.Timestamp.now().strftime('%Y-%m-%d'),
+                date=(
+                    dates[-1].strftime("%Y-%m-%d")
+                    if dates
+                    else pd.Timestamp.now().strftime("%Y-%m-%d")
+                ),
                 metric_value=0,
                 evaluation={
-                    'status': CheckStatus.PASS,
-                    'severity': 'INFO',
-                    'exceeded_threshold': None
+                    "status": CheckStatus.PASS,
+                    "severity": "INFO",
+                    "exceeded_threshold": None,
                 },
                 additional_metrics={
-                    'message': 'Insufficient dates for turnover comparison',
-                    'date_count': len(dates)
-                }
+                    "message": "Insufficient dates for turnover comparison",
+                    "date_count": len(dates),
+                },
             )
 
         # Compare latest two dates
         prev_date = dates[-2]
         curr_date = dates[-1]
 
-        prev_ids: Set = set(df[df[self.date_col] == prev_date][column].dropna().unique())
-        curr_ids: Set = set(df[df[self.date_col] == curr_date][column].dropna().unique())
+        prev_ids: Set = set(
+            df[df[self.date_col] == prev_date][column].dropna().unique()
+        )
+        curr_ids: Set = set(
+            df[df[self.date_col] == curr_date][column].dropna().unique()
+        )
 
         # Calculate turnover
         added = curr_ids - prev_ids
@@ -96,26 +105,28 @@ class TurnoverCheck(BaseCheck):
         dropped_count = len(dropped)
         total_count = len(total_unique)
 
-        turnover_rate = (added_count + dropped_count) / total_count if total_count > 0 else 0
+        turnover_rate = (
+            (added_count + dropped_count) / total_count if total_count > 0 else 0
+        )
 
         # Evaluate against thresholds
-        thresholds = config.get('thresholds', {})
+        thresholds = config.get("thresholds", {})
         evaluation = self._evaluate_threshold(turnover_rate, thresholds)
 
         # Create result record
         return self._create_result_record(
             column=column,
-            date=curr_date.strftime('%Y-%m-%d'),
+            date=curr_date.strftime("%Y-%m-%d"),
             metric_value=turnover_rate,
             evaluation=evaluation,
             additional_metrics={
-                'added_count': int(added_count),
-                'dropped_count': int(dropped_count),
-                'turnover_rate': round(turnover_rate * 100, 2),
-                'total_unique_ids': int(total_count),
-                'previous_date': prev_date.strftime('%Y-%m-%d'),
-                'current_date': curr_date.strftime('%Y-%m-%d'),
-                'added_ids_sample': list(added)[:MAX_SAMPLE_SIZE],
-                'dropped_ids_sample': list(dropped)[:MAX_SAMPLE_SIZE]
-            }
+                "added_count": int(added_count),
+                "dropped_count": int(dropped_count),
+                "turnover_rate": round(turnover_rate * 100, 2),
+                "total_unique_ids": int(total_count),
+                "previous_date": prev_date.strftime("%Y-%m-%d"),
+                "current_date": curr_date.strftime("%Y-%m-%d"),
+                "added_ids_sample": list(added)[:MAX_SAMPLE_SIZE],
+                "dropped_ids_sample": list(dropped)[:MAX_SAMPLE_SIZE],
+            },
         )

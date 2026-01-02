@@ -1,23 +1,24 @@
 """Tests for custom exceptions."""
 
 import pytest
+
 from data_quality.core.exceptions import (
-    DQFrameworkError,
+    AlertingError,
+    CalculationError,
+    CheckError,
     ConfigurationError,
     ConnectionError,
     DataRetrievalError,
-    CheckError,
+    DataTypeError,
+    DQFrameworkError,
+    ExecutionError,
     FilterError,
-    ValidationError,
+    InsufficientDataError,
     InvalidThresholdError,
     MissingColumnError,
-    ExecutionError,
-    DataTypeError,
-    CalculationError,
-    InsufficientDataError,
-    ThresholdViolationError,
     OutputError,
-    AlertingError,
+    ThresholdViolationError,
+    ValidationError,
 )
 
 
@@ -57,26 +58,21 @@ class TestConfigurationError:
     def test_with_field_path(self):
         """Test with field path specified."""
         error = ConfigurationError(
-            "Invalid value",
-            field_path="checks.completeness.column1"
+            "Invalid value", field_path="checks.completeness.column1"
         )
         assert error.field_path == "checks.completeness.column1"
         assert "field_path=checks.completeness.column1" in str(error)
 
     def test_with_line_number(self):
         """Test with line number specified."""
-        error = ConfigurationError(
-            "Syntax error",
-            line_number=45
-        )
+        error = ConfigurationError("Syntax error", line_number=45)
         assert error.line_number == 45
         assert "line_number=45" in str(error)
 
     def test_with_suggestion(self):
         """Test with suggestion for fix."""
         error = ConfigurationError(
-            "Type error",
-            suggestion="Remove quotes around numeric values"
+            "Type error", suggestion="Remove quotes around numeric values"
         )
         assert error.suggestion == "Remove quotes around numeric values"
         assert "suggestion=" in str(error)
@@ -87,7 +83,7 @@ class TestConfigurationError:
             "Invalid threshold",
             field_path="checks.completeness.col1.thresholds",
             line_number=50,
-            suggestion="Use float instead of string"
+            suggestion="Use float instead of string",
         )
         error_str = str(error)
         assert "field_path=" in error_str
@@ -105,19 +101,13 @@ class TestConnectionError:
 
     def test_with_connector_type(self):
         """Test with connector type."""
-        error = ConnectionError(
-            "Auth failed",
-            connector_type="oracle"
-        )
+        error = ConnectionError("Auth failed", connector_type="oracle")
         assert error.connector_type == "oracle"
         assert "connector_type=oracle" in str(error)
 
     def test_with_retry_count(self):
         """Test with retry count."""
-        error = ConnectionError(
-            "Timeout",
-            retry_count=3
-        )
+        error = ConnectionError("Timeout", retry_count=3)
         assert error.retry_count == 3
         assert "retry_count=3" in str(error)
 
@@ -157,19 +147,13 @@ class TestCheckError:
 
     def test_with_check_type(self):
         """Test with check type."""
-        error = CheckError(
-            "Failed",
-            check_type="completeness"
-        )
+        error = CheckError("Failed", check_type="completeness")
         assert error.check_type == "completeness"
         assert "check_type=completeness" in str(error)
 
     def test_with_column(self):
         """Test with column name."""
-        error = CheckError(
-            "Failed",
-            column="carbon_em"
-        )
+        error = CheckError("Failed", column="carbon_em")
         assert error.column == "carbon_em"
         assert "column=carbon_em" in str(error)
 
@@ -195,10 +179,7 @@ class TestFilterError:
 
     def test_with_filter_condition(self):
         """Test with filter condition."""
-        error = FilterError(
-            "Syntax error",
-            filter_condition="universe == 'US'"
-        )
+        error = FilterError("Syntax error", filter_condition="universe == 'US'")
         assert error.filter_condition == "universe == 'US'"
         assert "filter_condition=" in str(error)
 
@@ -242,7 +223,7 @@ class TestValidationError:
             "Threshold exceeded",
             threshold_type="absolute_critical",
             threshold_value=0.05,
-            actual_value=0.08
+            actual_value=0.08,
         )
         assert error.threshold_type == "absolute_critical"
         assert error.threshold_value == 0.05

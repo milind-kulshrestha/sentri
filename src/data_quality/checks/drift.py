@@ -1,11 +1,12 @@
 """Drift check implementation using PSI."""
 
 from typing import Any, Dict
-import pandas as pd
+
 import numpy as np
+import pandas as pd
 
 from data_quality.checks.base import BaseCheck
-from data_quality.utils.constants import CheckStatus, PSI_NO_DRIFT, PSI_MODERATE_DRIFT
+from data_quality.utils.constants import PSI_MODERATE_DRIFT, PSI_NO_DRIFT, CheckStatus
 
 
 class DriftCheck(BaseCheck):
@@ -21,21 +22,21 @@ class DriftCheck(BaseCheck):
         results = []
 
         for column, config in self.check_config.items():
-            if not config.get('enabled', True):
+            if not config.get("enabled", True):
                 continue
 
             try:
                 result = self._check_column(column, config)
                 results.append(result)
             except Exception as e:
-                error_result = self._handle_column_error(column, e, {'check': 'drift'})
+                error_result = self._handle_column_error(column, e, {"check": "drift"})
                 results.append(error_result)
 
         return pd.DataFrame(results) if results else pd.DataFrame()
 
     def _check_column(self, column: str, config: Dict[str, Any]) -> Dict[str, Any]:
         """Check drift for a single column."""
-        df = self._apply_filter(self.df, config.get('filter_condition'))
+        df = self._apply_filter(self.df, config.get("filter_condition"))
 
         if column not in df.columns:
             return self._handle_column_error(
@@ -46,10 +47,20 @@ class DriftCheck(BaseCheck):
         if len(dates) < 2:
             return self._create_result_record(
                 column=column,
-                date=dates[-1].strftime('%Y-%m-%d') if dates else pd.Timestamp.now().strftime('%Y-%m-%d'),
+                date=(
+                    dates[-1].strftime("%Y-%m-%d")
+                    if dates
+                    else pd.Timestamp.now().strftime("%Y-%m-%d")
+                ),
                 metric_value=0,
-                evaluation={'status': CheckStatus.PASS, 'severity': 'INFO', 'exceeded_threshold': None},
-                additional_metrics={'message': 'Insufficient dates for drift comparison'}
+                evaluation={
+                    "status": CheckStatus.PASS,
+                    "severity": "INFO",
+                    "exceeded_threshold": None,
+                },
+                additional_metrics={
+                    "message": "Insufficient dates for drift comparison"
+                },
             )
 
         # Get baseline and current distributions
@@ -59,46 +70,56 @@ class DriftCheck(BaseCheck):
         if len(baseline_values) < 10 or len(current_values) < 10:
             return self._create_result_record(
                 column=column,
-                date=dates[-1].strftime('%Y-%m-%d'),
+                date=dates[-1].strftime("%Y-%m-%d"),
                 metric_value=0,
-                evaluation={'status': CheckStatus.PASS, 'severity': 'INFO', 'exceeded_threshold': None},
-                additional_metrics={'message': 'Insufficient data for PSI calculation'}
+                evaluation={
+                    "status": CheckStatus.PASS,
+                    "severity": "INFO",
+                    "exceeded_threshold": None,
+                },
+                additional_metrics={"message": "Insufficient data for PSI calculation"},
             )
 
         # Calculate PSI
         psi = self._calculate_psi(baseline_values, current_values)
 
-        thresholds = config.get('thresholds', {})
-        critical = thresholds.get('absolute_critical', PSI_MODERATE_DRIFT)
-        warning = thresholds.get('absolute_warning', PSI_NO_DRIFT)
+        thresholds = config.get("thresholds", {})
+        critical = thresholds.get("absolute_critical", PSI_MODERATE_DRIFT)
+        warning = thresholds.get("absolute_warning", PSI_NO_DRIFT)
 
         if psi >= critical:
             status = CheckStatus.FAIL
-            severity = 'CRITICAL'
-            interpretation = 'Significant drift detected'
+            severity = "CRITICAL"
+            interpretation = "Significant drift detected"
         elif psi >= warning:
             status = CheckStatus.WARNING
-            severity = 'WARNING'
-            interpretation = 'Moderate drift detected'
+            severity = "WARNING"
+            interpretation = "Moderate drift detected"
         else:
             status = CheckStatus.PASS
-            severity = 'INFO'
-            interpretation = 'No significant drift'
+            severity = "INFO"
+            interpretation = "No significant drift"
 
         return self._create_result_record(
             column=column,
-            date=dates[-1].strftime('%Y-%m-%d'),
+            date=dates[-1].strftime("%Y-%m-%d"),
             metric_value=psi,
-            evaluation={'status': status, 'severity': severity, 'exceeded_threshold': critical if status == CheckStatus.FAIL else None},
+            evaluation={
+                "status": status,
+                "severity": severity,
+                "exceeded_threshold": critical if status == CheckStatus.FAIL else None,
+            },
             additional_metrics={
-                'psi': round(psi, 4),
-                'interpretation': interpretation,
-                'baseline_date': dates[0].strftime('%Y-%m-%d'),
-                'current_date': dates[-1].strftime('%Y-%m-%d')
-            }
+                "psi": round(psi, 4),
+                "interpretation": interpretation,
+                "baseline_date": dates[0].strftime("%Y-%m-%d"),
+                "current_date": dates[-1].strftime("%Y-%m-%d"),
+            },
         )
 
-    def _calculate_psi(self, baseline: pd.Series, current: pd.Series, n_bins: int = 10) -> float:
+    def _calculate_psi(
+        self, baseline: pd.Series, current: pd.Series, n_bins: int = 10
+    ) -> float:
         """
         Calculate Population Stability Index.
 
@@ -126,6 +147,8 @@ class DriftCheck(BaseCheck):
         current_props = np.where(current_props == 0, 0.0001, current_props)
 
         # Calculate PSI
-        psi = np.sum((current_props - baseline_props) * np.log(current_props / baseline_props))
+        psi = np.sum(
+            (current_props - baseline_props) * np.log(current_props / baseline_props)
+        )
 
         return float(psi)

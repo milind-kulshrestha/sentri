@@ -1,12 +1,12 @@
 """HTML output formatter."""
 
-from typing import Any, Dict
 from pathlib import Path
+from typing import Any, Dict
+
 from jinja2 import Template
 
-from data_quality.utils.logger import get_logger
 from data_quality.utils.constants import CheckStatus
-
+from data_quality.utils.logger import get_logger
 
 HTML_TEMPLATE = """
 <!DOCTYPE html>
@@ -95,10 +95,10 @@ class HTMLFormatter:
         import pandas as pd
 
         return self.template.render(
-            metadata=results.get('metadata', {}),
-            summary=results.get('summary', {}),
-            results=results.get('results', []),
-            timestamp=pd.Timestamp.now().isoformat()
+            metadata=results.get("metadata", {}),
+            summary=results.get("summary", {}),
+            results=results.get("results", []),
+            timestamp=pd.Timestamp.now().isoformat(),
         )
 
     def save(self, results: Dict[str, Any], path: str) -> str:

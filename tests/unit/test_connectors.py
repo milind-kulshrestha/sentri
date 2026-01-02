@@ -1,13 +1,19 @@
 """Tests for data connectors."""
 
-import pytest
-import tempfile
 import os
-import pandas as pd
+import tempfile
 from datetime import datetime
+
+import pandas as pd
+import pytest
+
 from data_quality.connectors.base import DataConnector
 from data_quality.connectors.csv_connector import CSVConnector
-from data_quality.connectors.registry import ConnectorRegistry, register_connector, get_connector
+from data_quality.connectors.registry import (
+    ConnectorRegistry,
+    get_connector,
+    register_connector,
+)
 from data_quality.core.exceptions import ConnectionError, DataRetrievalError
 
 
@@ -21,6 +27,7 @@ class TestDataConnectorBase:
 
     def test_subclass_must_implement_methods(self):
         """Test that subclass must implement abstract methods."""
+
         class IncompleteConnector(DataConnector):
             pass
 
@@ -99,7 +106,7 @@ class TestCSVConnector:
 4,2025-01-02,250,B
 5,2025-01-03,175,A
 """
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
             f.write(content)
             f.flush()
             temp_path = f.name
@@ -108,31 +115,19 @@ class TestCSVConnector:
 
     def test_validate_connection_success(self, sample_csv):
         """Test successful connection validation."""
-        connector = CSVConnector(
-            file_path=sample_csv,
-            date_column="effective_date"
-        )
+        connector = CSVConnector(file_path=sample_csv, date_column="effective_date")
         assert connector.validate_connection() is True
 
     def test_validate_connection_file_not_found(self):
         """Test validation with non-existent file."""
-        connector = CSVConnector(
-            file_path="/nonexistent/file.csv",
-            date_column="date"
-        )
+        connector = CSVConnector(file_path="/nonexistent/file.csv", date_column="date")
         with pytest.raises(ConnectionError):
             connector.validate_connection()
 
     def test_get_data_all_dates(self, sample_csv):
         """Test getting all data."""
-        connector = CSVConnector(
-            file_path=sample_csv,
-            date_column="effective_date"
-        )
-        df = connector.get_data(
-            start_date="2025-01-01",
-            end_date="2025-01-03"
-        )
+        connector = CSVConnector(file_path=sample_csv, date_column="effective_date")
+        df = connector.get_data(start_date="2025-01-01", end_date="2025-01-03")
 
         assert len(df) == 5
         assert "entity_id" in df.columns
@@ -140,14 +135,8 @@ class TestCSVConnector:
 
     def test_get_data_filtered_dates(self, sample_csv):
         """Test getting data with date filter."""
-        connector = CSVConnector(
-            file_path=sample_csv,
-            date_column="effective_date"
-        )
-        df = connector.get_data(
-            start_date="2025-01-01",
-            end_date="2025-01-02"
-        )
+        connector = CSVConnector(file_path=sample_csv, date_column="effective_date")
+        df = connector.get_data(start_date="2025-01-01", end_date="2025-01-02")
 
         assert len(df) == 4  # Only Jan 1 and Jan 2
 
@@ -157,19 +146,13 @@ class TestCSVConnector:
         content = """Entity_ID,Effective_Date,Value
 1,2025-01-01,100
 """
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
             f.write(content)
             temp_path = f.name
 
         try:
-            connector = CSVConnector(
-                file_path=temp_path,
-                date_column="Effective_Date"
-            )
-            df = connector.get_data(
-                start_date="2025-01-01",
-                end_date="2025-01-01"
-            )
+            connector = CSVConnector(file_path=temp_path, date_column="Effective_Date")
+            df = connector.get_data(start_date="2025-01-01", end_date="2025-01-01")
 
             # Check columns are lowercase
             assert "entity_id" in df.columns
@@ -183,20 +166,15 @@ class TestCSVConnector:
         content = """entity_id;date;value
 1;2025-01-01;100
 """
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
             f.write(content)
             temp_path = f.name
 
         try:
             connector = CSVConnector(
-                file_path=temp_path,
-                date_column="date",
-                delimiter=";"
+                file_path=temp_path, date_column="date", delimiter=";"
             )
-            df = connector.get_data(
-                start_date="2025-01-01",
-                end_date="2025-01-01"
-            )
+            df = connector.get_data(start_date="2025-01-01", end_date="2025-01-01")
 
             assert len(df) == 1
             assert df.iloc[0]["value"] == 100
@@ -206,20 +184,17 @@ class TestCSVConnector:
     def test_get_data_with_encoding(self):
         """Test reading CSV with specific encoding."""
         content = "entity_id,date,name\n1,2025-01-01,José\n"
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False, encoding='utf-8') as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".csv", delete=False, encoding="utf-8"
+        ) as f:
             f.write(content)
             temp_path = f.name
 
         try:
             connector = CSVConnector(
-                file_path=temp_path,
-                date_column="date",
-                encoding="utf-8"
+                file_path=temp_path, date_column="date", encoding="utf-8"
             )
-            df = connector.get_data(
-                start_date="2025-01-01",
-                end_date="2025-01-01"
-            )
+            df = connector.get_data(start_date="2025-01-01", end_date="2025-01-01")
 
             assert df.iloc[0]["name"] == "José"
         finally:
@@ -227,48 +202,29 @@ class TestCSVConnector:
 
     def test_close(self, sample_csv):
         """Test closing connector."""
-        connector = CSVConnector(
-            file_path=sample_csv,
-            date_column="effective_date"
-        )
+        connector = CSVConnector(file_path=sample_csv, date_column="effective_date")
         # Should not raise
         connector.close()
 
     def test_context_manager(self, sample_csv):
         """Test using connector as context manager."""
         with CSVConnector(
-            file_path=sample_csv,
-            date_column="effective_date"
+            file_path=sample_csv, date_column="effective_date"
         ) as connector:
-            df = connector.get_data(
-                start_date="2025-01-01",
-                end_date="2025-01-03"
-            )
+            df = connector.get_data(start_date="2025-01-01", end_date="2025-01-03")
             assert len(df) == 5
 
     def test_empty_result(self, sample_csv):
         """Test getting data with no matching dates."""
-        connector = CSVConnector(
-            file_path=sample_csv,
-            date_column="effective_date"
-        )
-        df = connector.get_data(
-            start_date="2024-01-01",
-            end_date="2024-01-01"
-        )
+        connector = CSVConnector(file_path=sample_csv, date_column="effective_date")
+        df = connector.get_data(start_date="2024-01-01", end_date="2024-01-01")
 
         assert len(df) == 0
 
     def test_date_parsing(self, sample_csv):
         """Test that dates are properly parsed."""
-        connector = CSVConnector(
-            file_path=sample_csv,
-            date_column="effective_date"
-        )
-        df = connector.get_data(
-            start_date="2025-01-01",
-            end_date="2025-01-03"
-        )
+        connector = CSVConnector(file_path=sample_csv, date_column="effective_date")
+        df = connector.get_data(start_date="2025-01-01", end_date="2025-01-03")
 
         assert pd.api.types.is_datetime64_any_dtype(df["effective_date"])
 
@@ -278,6 +234,7 @@ class TestGlobalRegistry:
 
     def test_register_connector_decorator(self):
         """Test global register_connector decorator."""
+
         @register_connector("global_test")
         class GlobalTestConnector(DataConnector):
             def validate_connection(self):

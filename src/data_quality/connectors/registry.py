@@ -26,6 +26,7 @@ class ConnectorRegistry:
         Returns:
             Decorator function
         """
+
         def decorator(cls: Type[DataConnector]) -> Type[DataConnector]:
             self._connectors[name] = cls
             return cls

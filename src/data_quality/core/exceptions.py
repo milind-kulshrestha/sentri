@@ -100,11 +100,13 @@ class CheckError(DQFrameworkError):
 
 class InvalidThresholdError(CheckError):
     """Raised when threshold configuration is invalid."""
+
     pass
 
 
 class MissingColumnError(CheckError):
     """Raised when a required column is missing from the data."""
+
     pass
 
 
@@ -126,26 +128,31 @@ class FilterError(CheckError):
 
 class ExecutionError(CheckError):
     """Raised when check execution fails."""
+
     pass
 
 
 class DataTypeError(ExecutionError):
     """Raised when data type is incompatible with the check."""
+
     pass
 
 
 class CalculationError(ExecutionError):
     """Raised when a calculation fails during check execution."""
+
     pass
 
 
 class InsufficientDataError(ExecutionError):
     """Raised when there is insufficient data to perform a check."""
+
     pass
 
 
 class ValidationError(DQFrameworkError):
     """Raised when validation fails."""
+
     pass
 
 
@@ -175,9 +182,11 @@ class ThresholdViolationError(ValidationError):
 
 class OutputError(DQFrameworkError):
     """Raised when output generation fails."""
+
     pass
 
 
 class AlertingError(DQFrameworkError):
     """Raised when alerting fails."""
+
     pass

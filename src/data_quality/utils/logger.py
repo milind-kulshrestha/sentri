@@ -1,11 +1,11 @@
 """Logging configuration for the Data Quality Framework."""
 
-import logging
 import json
+import logging
 import sys
 from datetime import datetime
-from typing import Any, Dict, Optional
 from pathlib import Path
+from typing import Any, Dict, Optional
 
 
 class JSONFormatter(logging.Formatter):
@@ -105,8 +105,7 @@ def setup_logging(
 
 
 def get_logger(
-    name: str,
-    context: Optional[Dict[str, Any]] = None
+    name: str, context: Optional[Dict[str, Any]] = None
 ) -> logging.LoggerAdapter:
     """
     Get a logger with optional context.

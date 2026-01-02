@@ -1,7 +1,8 @@
 """CSV output formatter."""
 
-from typing import Any, Dict
 from pathlib import Path
+from typing import Any, Dict
+
 import pandas as pd
 
 from data_quality.utils.logger import get_logger
@@ -48,7 +49,7 @@ class CSVFormatter:
 
     def _results_to_dataframe(self, results: Dict[str, Any]) -> pd.DataFrame:
         """Convert results to DataFrame."""
-        result_list = results.get('results', [])
+        result_list = results.get("results", [])
 
         if not result_list:
             return pd.DataFrame()
@@ -63,7 +64,7 @@ class CSVFormatter:
                         flat[f"{key}_{k}"] = v
                 elif isinstance(value, list):
                     flat[key] = str(value)
-                elif hasattr(value, 'value'):  # Enum
+                elif hasattr(value, "value"):  # Enum
                     flat[key] = value.value
                 else:
                     flat[key] = value

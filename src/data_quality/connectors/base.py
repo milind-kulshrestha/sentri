@@ -1,12 +1,13 @@
 """Base class for all data connectors."""
 
+import time
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
-import time
+
 import pandas as pd
 
-from data_quality.utils.logger import get_logger
 from data_quality.core.exceptions import ConnectionError, DataRetrievalError
+from data_quality.utils.logger import get_logger
 
 
 class DataConnector(ABC):
@@ -42,12 +43,7 @@ class DataConnector(ABC):
         pass
 
     @abstractmethod
-    def get_data(
-        self,
-        start_date: str,
-        end_date: str,
-        **kwargs
-    ) -> pd.DataFrame:
+    def get_data(self, start_date: str, end_date: str, **kwargs) -> pd.DataFrame:
         """
         Retrieve data from the data source.
 
@@ -78,11 +74,7 @@ class DataConnector(ABC):
         self.close()
         return False
 
-    def handle_error(
-        self,
-        error: Exception,
-        context: Dict[str, Any]
-    ) -> None:
+    def handle_error(self, error: Exception, context: Dict[str, Any]) -> None:
         """
         Handle connection and query errors gracefully.
 
@@ -92,15 +84,12 @@ class DataConnector(ABC):
         """
         self.logger.error(
             f"Error in {self.__class__.__name__}: {str(error)}",
-            extra={"context": context}
+            extra={"context": context},
         )
         raise
 
     def retry_with_backoff(
-        self,
-        func: callable,
-        max_attempts: int = 3,
-        backoff_factor: float = 2.0
+        self, func: callable, max_attempts: int = 3, backoff_factor: float = 2.0
     ) -> Any:
         """
         Retry a function with exponential backoff.

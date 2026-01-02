@@ -1,23 +1,24 @@
 """Tests for constants and enumerations."""
 
 import pytest
+
 from data_quality.utils.constants import (
-    CheckStatus,
-    Severity,
-    OutputFormat,
-    ConnectorType,
-    CheckType,
-    CorrelationType,
-    DriftMethod,
-    DEFAULT_THRESHOLDS,
-    PSI_NO_DRIFT,
-    PSI_MODERATE_DRIFT,
-    CORRELATION_WEAK,
     CORRELATION_MODERATE,
     CORRELATION_STRONG,
-    DEFAULT_MAX_RETRIES,
+    CORRELATION_WEAK,
     DEFAULT_BACKOFF_FACTOR,
+    DEFAULT_MAX_RETRIES,
+    DEFAULT_THRESHOLDS,
     MAX_SAMPLE_SIZE,
+    PSI_MODERATE_DRIFT,
+    PSI_NO_DRIFT,
+    CheckStatus,
+    CheckType,
+    ConnectorType,
+    CorrelationType,
+    DriftMethod,
+    OutputFormat,
+    Severity,
 )
 
 

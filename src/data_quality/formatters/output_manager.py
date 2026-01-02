@@ -1,12 +1,13 @@
 """Output manager for coordinating result formatting."""
 
-from typing import Any, Dict, List, Optional
 from pathlib import Path
+from typing import Any, Dict, List, Optional
+
 import pandas as pd
 
-from data_quality.formatters.json_formatter import JSONFormatter
 from data_quality.formatters.csv_formatter import CSVFormatter
 from data_quality.formatters.html_formatter import HTMLFormatter
+from data_quality.formatters.json_formatter import JSONFormatter
 from data_quality.utils.logger import get_logger
 
 
@@ -48,9 +49,7 @@ class OutputManager:
         self.html_formatter = HTMLFormatter()
 
     def generate_outputs(
-        self,
-        results: Dict[str, Any],
-        check_name: Optional[str] = None
+        self, results: Dict[str, Any], check_name: Optional[str] = None
     ) -> Dict[str, str]:
         """
         Generate outputs in all configured formats.

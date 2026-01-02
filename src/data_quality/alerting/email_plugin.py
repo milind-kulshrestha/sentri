@@ -1,8 +1,8 @@
 """Email alerting plugin."""
 
 import smtplib
-from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from typing import Any, Dict, List
 
 from data_quality.alerting.base import AlertPlugin
@@ -28,20 +28,20 @@ class EmailAlertPlugin(AlertPlugin):
                 - use_tls: Use TLS (default True)
         """
         super().__init__(config)
-        self.smtp_host = config.get('smtp_host', 'localhost')
-        self.smtp_port = config.get('smtp_port', 587)
-        self.username = config.get('username')
-        self.password = config.get('password')
-        self.from_address = config.get('from_address', 'dq-framework@company.com')
-        self.to_addresses = config.get('to_addresses', [])
-        self.subject_prefix = config.get('subject_prefix', '[DQ Alert]')
-        self.use_tls = config.get('use_tls', True)
+        self.smtp_host = config.get("smtp_host", "localhost")
+        self.smtp_port = config.get("smtp_port", 587)
+        self.username = config.get("username")
+        self.password = config.get("password")
+        self.from_address = config.get("from_address", "dq-framework@company.com")
+        self.to_addresses = config.get("to_addresses", [])
+        self.subject_prefix = config.get("subject_prefix", "[DQ Alert]")
+        self.use_tls = config.get("use_tls", True)
 
     def send_alert(
         self,
         results: Dict[str, Any],
         failed_checks: List[Dict[str, Any]],
-        warning_checks: List[Dict[str, Any]]
+        warning_checks: List[Dict[str, Any]],
     ) -> bool:
         """
         Send email alert.
@@ -80,12 +80,12 @@ class EmailAlertPlugin(AlertPlugin):
         self,
         results: Dict[str, Any],
         failed_checks: List[Dict[str, Any]],
-        warning_checks: List[Dict[str, Any]]
+        warning_checks: List[Dict[str, Any]],
     ) -> MIMEMultipart:
         """Build email message."""
-        metadata = results.get('metadata', {})
-        summary = results.get('summary', {})
-        check_name = metadata.get('dq_check_name', 'DQ Check')
+        metadata = results.get("metadata", {})
+        summary = results.get("summary", {})
+        check_name = metadata.get("dq_check_name", "DQ Check")
 
         # Determine severity
         if failed_checks:
@@ -99,10 +99,10 @@ class EmailAlertPlugin(AlertPlugin):
         body = self._build_body(check_name, summary, failed_checks, warning_checks)
 
         msg = MIMEMultipart()
-        msg['From'] = self.from_address
-        msg['To'] = ', '.join(self.to_addresses)
-        msg['Subject'] = subject
-        msg.attach(MIMEText(body, 'html'))
+        msg["From"] = self.from_address
+        msg["To"] = ", ".join(self.to_addresses)
+        msg["Subject"] = subject
+        msg.attach(MIMEText(body, "html"))
 
         return msg
 
@@ -111,7 +111,7 @@ class EmailAlertPlugin(AlertPlugin):
         check_name: str,
         summary: Dict[str, Any],
         failed_checks: List[Dict[str, Any]],
-        warning_checks: List[Dict[str, Any]]
+        warning_checks: List[Dict[str, Any]],
     ) -> str:
         """Build email body HTML."""
         html = f"""
@@ -158,8 +158,4 @@ class EmailAlertPlugin(AlertPlugin):
             if self.username and self.password:
                 server.login(self.username, self.password)
 
-            server.sendmail(
-                self.from_address,
-                self.to_addresses,
-                msg.as_string()
-            )
+            server.sendmail(self.from_address, self.to_addresses, msg.as_string())

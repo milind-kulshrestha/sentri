@@ -1,10 +1,11 @@
 """Uniqueness check implementation."""
 
 from typing import Any, Dict, List
+
 import pandas as pd
 
 from data_quality.checks.base import BaseCheck
-from data_quality.utils.constants import CheckStatus, MAX_SAMPLE_SIZE
+from data_quality.utils.constants import MAX_SAMPLE_SIZE, CheckStatus
 
 
 class UniquenessCheck(BaseCheck):
@@ -25,7 +26,7 @@ class UniquenessCheck(BaseCheck):
         results = []
 
         for column, config in self.check_config.items():
-            if not config.get('enabled', True):
+            if not config.get("enabled", True):
                 continue
 
             try:
@@ -33,7 +34,7 @@ class UniquenessCheck(BaseCheck):
                 results.append(result)
             except Exception as e:
                 error_result = self._handle_column_error(
-                    column, e, {'check': 'uniqueness'}
+                    column, e, {"check": "uniqueness"}
                 )
                 results.append(error_result)
 
@@ -51,13 +52,13 @@ class UniquenessCheck(BaseCheck):
             Dict: Check result
         """
         # Apply filter if specified
-        df = self._apply_filter(self.df, config.get('filter_condition'))
+        df = self._apply_filter(self.df, config.get("filter_condition"))
 
         if column not in df.columns:
             return self._handle_column_error(
                 column,
                 ValueError(f"Column '{column}' not found in DataFrame"),
-                {'available_columns': list(df.columns)}
+                {"available_columns": list(df.columns)},
             )
 
         # Calculate duplicate statistics
@@ -73,12 +74,12 @@ class UniquenessCheck(BaseCheck):
         duplicated_sample = list(duplicated_values[:MAX_SAMPLE_SIZE])
 
         # Evaluate against thresholds (threshold is count of duplicates)
-        thresholds = config.get('thresholds', {})
+        thresholds = config.get("thresholds", {})
         evaluation = self._evaluate_threshold(duplicate_count, thresholds)
 
         # Get date for result
         dates = self._get_unique_dates()
-        date = dates[-1] if dates else pd.Timestamp.now().strftime('%Y-%m-%d')
+        date = dates[-1] if dates else pd.Timestamp.now().strftime("%Y-%m-%d")
 
         # Create result record
         return self._create_result_record(
@@ -87,10 +88,14 @@ class UniquenessCheck(BaseCheck):
             metric_value=duplicate_count,
             evaluation=evaluation,
             additional_metrics={
-                'total_rows': int(total_rows),
-                'unique_count': int(unique_count),
-                'duplicate_count': int(duplicate_count),
-                'duplicate_percentage': round(duplicate_count / total_rows * 100, 2) if total_rows > 0 else 0,
-                'duplicated_values_sample': duplicated_sample
-            }
+                "total_rows": int(total_rows),
+                "unique_count": int(unique_count),
+                "duplicate_count": int(duplicate_count),
+                "duplicate_percentage": (
+                    round(duplicate_count / total_rows * 100, 2)
+                    if total_rows > 0
+                    else 0
+                ),
+                "duplicated_values_sample": duplicated_sample,
+            },
         )

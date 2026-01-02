@@ -2,11 +2,12 @@
 
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
+
 import pandas as pd
 
-from data_quality.utils.logger import get_logger
+from data_quality.core.exceptions import CheckError, FilterError
 from data_quality.utils.constants import CheckStatus, Severity
-from data_quality.core.exceptions import FilterError, CheckError
+from data_quality.utils.logger import get_logger
 
 
 class BaseCheck(ABC):
@@ -22,7 +23,7 @@ class BaseCheck(ABC):
         df: pd.DataFrame,
         date_col: str,
         id_col: str,
-        check_config: Dict[str, Dict[str, Any]]
+        check_config: Dict[str, Dict[str, Any]],
     ):
         """
         Initialize base check.
@@ -67,8 +68,7 @@ class BaseCheck(ABC):
         return df
 
     def _normalize_config(
-        self,
-        config: Dict[str, Dict[str, Any]]
+        self, config: Dict[str, Dict[str, Any]]
     ) -> Dict[str, Dict[str, Any]]:
         """
         Normalize configuration keys to lowercase.
@@ -85,9 +85,7 @@ class BaseCheck(ABC):
         return normalized
 
     def _apply_filter(
-        self,
-        df: pd.DataFrame,
-        filter_condition: Optional[str]
+        self, df: pd.DataFrame, filter_condition: Optional[str]
     ) -> pd.DataFrame:
         """
         Apply pandas query filter to DataFrame.
@@ -110,15 +108,14 @@ class BaseCheck(ABC):
         except Exception as e:
             self.logger.error(f"Filter error: {filter_condition} - {str(e)}")
             raise FilterError(
-                f"Invalid filter: {filter_condition}",
-                filter_condition=filter_condition
+                f"Invalid filter: {filter_condition}", filter_condition=filter_condition
             ) from e
 
     def _evaluate_threshold(
         self,
         value: float,
         thresholds: Dict[str, float],
-        threshold_type: str = "absolute"
+        threshold_type: str = "absolute",
     ) -> Dict[str, Any]:
         """
         Evaluate a value against configured thresholds.
@@ -149,7 +146,7 @@ class BaseCheck(ABC):
                 return {
                     "status": CheckStatus.FAIL,
                     "severity": Severity.CRITICAL,
-                    "exceeded_threshold": critical
+                    "exceeded_threshold": critical,
                 }
 
         # Check warning threshold
@@ -158,21 +155,18 @@ class BaseCheck(ABC):
                 return {
                     "status": CheckStatus.WARNING,
                     "severity": Severity.WARNING,
-                    "exceeded_threshold": warning
+                    "exceeded_threshold": warning,
                 }
 
         # Passed all thresholds
         return {
             "status": CheckStatus.PASS,
             "severity": Severity.INFO,
-            "exceeded_threshold": None
+            "exceeded_threshold": None,
         }
 
     def _handle_column_error(
-        self,
-        column: str,
-        error: Exception,
-        context: Dict[str, Any]
+        self, column: str, error: Exception, context: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
         Handle errors that occur during column-level check execution.
@@ -186,8 +180,7 @@ class BaseCheck(ABC):
             Dict: Error result following standard schema
         """
         self.logger.error(
-            f"Column error in {column}: {str(error)}",
-            extra={"context": context}
+            f"Column error in {column}: {str(error)}", extra={"context": context}
         )
 
         return {
@@ -197,7 +190,7 @@ class BaseCheck(ABC):
             "severity": Severity.ERROR,
             "error_message": str(error),
             "error_type": type(error).__name__,
-            "context": context
+            "context": context,
         }
 
     def _create_result_record(
@@ -206,7 +199,7 @@ class BaseCheck(ABC):
         date: str,
         metric_value: float,
         evaluation: Dict[str, Any],
-        additional_metrics: Optional[Dict[str, Any]] = None
+        additional_metrics: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """
         Create a standardized result record.
@@ -236,7 +229,7 @@ class BaseCheck(ABC):
             "severity": evaluation["severity"],
             "exceeded_threshold": evaluation.get("exceeded_threshold"),
             "additional_metrics": additional_metrics or {},
-            "timestamp": pd.Timestamp.now().isoformat()
+            "timestamp": pd.Timestamp.now().isoformat(),
         }
 
     def _get_unique_dates(self) -> List[str]:
@@ -250,4 +243,4 @@ class BaseCheck(ABC):
             return []
 
         dates = self.df[self.date_col].dropna().unique()
-        return sorted([pd.Timestamp(d).strftime('%Y-%m-%d') for d in dates])
+        return sorted([pd.Timestamp(d).strftime("%Y-%m-%d") for d in dates])

@@ -1,11 +1,11 @@
 """Core components of the Data Quality Framework."""
 
 from data_quality.core.exceptions import (
-    DQFrameworkError,
+    CheckError,
     ConfigurationError,
     ConnectionError,
     DataRetrievalError,
-    CheckError,
+    DQFrameworkError,
     FilterError,
     ValidationError,
 )

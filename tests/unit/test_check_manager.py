@@ -13,16 +13,20 @@ class TestCheckManager:
     @pytest.fixture
     def sample_df(self):
         """Create a small DataFrame for checks."""
-        return pd.DataFrame({
-            "id": [1, 2, 3, 4],
-            "date": pd.to_datetime([
-                "2025-01-01",
-                "2025-01-01",
-                "2025-01-02",
-                "2025-01-02",
-            ]),
-            "value": [10.0, 20.0, 30.0, 40.0],
-        })
+        return pd.DataFrame(
+            {
+                "id": [1, 2, 3, 4],
+                "date": pd.to_datetime(
+                    [
+                        "2025-01-01",
+                        "2025-01-01",
+                        "2025-01-02",
+                        "2025-01-02",
+                    ]
+                ),
+                "value": [10.0, 20.0, 30.0, 40.0],
+            }
+        )
 
     @pytest.fixture
     def metadata(self):
@@ -47,7 +51,9 @@ class TestCheckManager:
 
     def test_run_all_checks_success(self, sample_df, metadata, checks_config):
         """run_all_checks should execute configured checks and aggregate results."""
-        manager = CheckManager(df=sample_df, metadata=metadata, checks_config=checks_config)
+        manager = CheckManager(
+            df=sample_df, metadata=metadata, checks_config=checks_config
+        )
 
         results = manager.run_all_checks()
 
@@ -73,7 +79,9 @@ class TestCheckManager:
 
     def test_run_all_checks_parallel(self, sample_df, metadata, checks_config):
         """run_all_checks_parallel should execute checks and aggregate results."""
-        manager = CheckManager(df=sample_df, metadata=metadata, checks_config=checks_config)
+        manager = CheckManager(
+            df=sample_df, metadata=metadata, checks_config=checks_config
+        )
 
         results = manager.run_all_checks_parallel(max_workers=2)
 

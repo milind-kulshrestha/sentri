@@ -69,7 +69,9 @@ class ConfigLoader:
         # Validate with Pydantic
         try:
             config = DQConfig(**processed_config)
-            self.logger.info(f"Configuration loaded successfully: {config.metadata.dq_check_name}")
+            self.logger.info(
+                f"Configuration loaded successfully: {config.metadata.dq_check_name}"
+            )
             return config
         except PydanticValidationError as e:
             error_messages = []
@@ -80,7 +82,7 @@ class ConfigLoader:
 
             raise ConfigurationError(
                 f"Configuration validation failed:\n" + "\n".join(error_messages),
-                context={"errors": e.errors()}
+                context={"errors": e.errors()},
             )
 
     def _load_yaml(self) -> Dict[str, Any]:
@@ -96,22 +98,22 @@ class ConfigLoader:
         if not self.config_path.exists():
             raise ConfigurationError(
                 f"Configuration file not found: {self.config_path}",
-                context={"path": str(self.config_path)}
+                context={"path": str(self.config_path)},
             )
 
         try:
-            with open(self.config_path, 'r', encoding='utf-8') as f:
+            with open(self.config_path, "r", encoding="utf-8") as f:
                 content = f.read()
                 return yaml.safe_load(content)
         except yaml.YAMLError as e:
             raise ConfigurationError(
                 f"YAML syntax error in configuration file: {e}",
-                context={"path": str(self.config_path)}
+                context={"path": str(self.config_path)},
             )
         except Exception as e:
             raise ConfigurationError(
                 f"Failed to read configuration file: {e}",
-                context={"path": str(self.config_path)}
+                context={"path": str(self.config_path)},
             )
 
     def _substitute_env_vars(self, obj: Any, path: str = "") -> Any:
@@ -132,10 +134,7 @@ class ConfigLoader:
         """
         if isinstance(obj, dict):
             return {
-                key: self._substitute_env_vars(
-                    value,
-                    f"{path}.{key}" if path else key
-                )
+                key: self._substitute_env_vars(value, f"{path}.{key}" if path else key)
                 for key, value in obj.items()
             }
         elif isinstance(obj, list):
@@ -163,7 +162,7 @@ class ConfigLoader:
             ConfigurationError: If environment variable is not set
         """
         # Pattern to match ${VAR_NAME}
-        pattern = r'\$\{([^}]+)\}'
+        pattern = r"\$\{([^}]+)\}"
 
         def replacer(match):
             var_name = match.group(1)
@@ -173,7 +172,7 @@ class ConfigLoader:
                 raise ConfigurationError(
                     f"Environment variable '{var_name}' is not set",
                     field_path=path,
-                    suggestion=f"Set the environment variable: export {var_name}=value"
+                    suggestion=f"Set the environment variable: export {var_name}=value",
                 )
 
             return env_value
@@ -183,7 +182,7 @@ class ConfigLoader:
 
 def load_config(
     config_path: Optional[Union[str, Path]] = None,
-    config_dict: Optional[Dict[str, Any]] = None
+    config_dict: Optional[Dict[str, Any]] = None,
 ) -> DQConfig:
     """
     Convenience function to load configuration.

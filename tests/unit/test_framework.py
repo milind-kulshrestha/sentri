@@ -12,15 +12,19 @@ class TestDataQualityFramework:
     @pytest.fixture
     def sample_df(self):
         """Simple DataFrame used for initialization tests."""
-        return pd.DataFrame({
-            "id": [1, 2, 3],
-            "date": pd.to_datetime([
-                "2025-01-01",
-                "2025-01-01",
-                "2025-01-02",
-            ]),
-            "value": [10.0, 20.0, 30.0],
-        })
+        return pd.DataFrame(
+            {
+                "id": [1, 2, 3],
+                "date": pd.to_datetime(
+                    [
+                        "2025-01-01",
+                        "2025-01-01",
+                        "2025-01-02",
+                    ]
+                ),
+                "value": [10.0, 20.0, 30.0],
+            }
+        )
 
     def test_framework_initialization_with_config_path(self, sample_df):
         """Constructor should store provided arguments and initialize attributes."""
@@ -62,10 +66,12 @@ class TestDQResults:
     @pytest.fixture
     def sample_df(self):
         """Sample DataFrame for results container."""
-        return pd.DataFrame({
-            "id": [1, 2],
-            "status": ["PASS", "FAIL"],
-        })
+        return pd.DataFrame(
+            {
+                "id": [1, 2],
+                "status": ["PASS", "FAIL"],
+            }
+        )
 
     @pytest.fixture
     def metadata(self):

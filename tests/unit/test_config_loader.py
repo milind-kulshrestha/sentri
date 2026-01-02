@@ -1,9 +1,11 @@
 """Tests for configuration loader."""
 
-import pytest
-import tempfile
 import os
+import tempfile
 from pathlib import Path
+
+import pytest
+
 from data_quality.core.config_loader import ConfigLoader, load_config
 from data_quality.core.exceptions import ConfigurationError
 
@@ -35,7 +37,7 @@ output:
   formats: [json]
   destination: /output
 """
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             f.write(yaml_content)
             config_path = f.name
 
@@ -71,7 +73,7 @@ output:
   formats: [json]
   destination: /output
 """
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             f.write(yaml_content)
             config_path = f.name
 
@@ -104,7 +106,7 @@ output:
   formats: [json]
   destination: /output
 """
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             f.write(yaml_content)
             config_path = f.name
 
@@ -131,7 +133,7 @@ source:
   csv:
     file_path: [invalid yaml
 """
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             f.write(yaml_content)
             config_path = f.name
 
@@ -139,7 +141,10 @@ source:
             loader = ConfigLoader(config_path)
             with pytest.raises(ConfigurationError) as exc_info:
                 loader.load()
-            assert "syntax" in str(exc_info.value).lower() or "yaml" in str(exc_info.value).lower()
+            assert (
+                "syntax" in str(exc_info.value).lower()
+                or "yaml" in str(exc_info.value).lower()
+            )
         finally:
             os.unlink(config_path)
 
@@ -163,7 +168,7 @@ output:
   formats: [invalid_format]
   destination: /output
 """
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             f.write(yaml_content)
             config_path = f.name
 
@@ -179,21 +184,15 @@ output:
         config_dict = {
             "source": {
                 "type": "csv",
-                "csv": {
-                    "file_path": "/data/test.csv",
-                    "date_column": "date"
-                }
+                "csv": {"file_path": "/data/test.csv", "date_column": "date"},
             },
             "metadata": {
                 "dq_check_name": "Test",
                 "date_column": "date",
-                "id_column": "id"
+                "id_column": "id",
             },
             "checks": {},
-            "output": {
-                "formats": ["json"],
-                "destination": "/output"
-            }
+            "output": {"formats": ["json"], "destination": "/output"},
         }
 
         loader = ConfigLoader.from_dict(config_dict)
@@ -226,7 +225,7 @@ output:
   formats: [json]
   destination: /output
 """
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             f.write(yaml_content)
             config_path = f.name
 
@@ -241,21 +240,15 @@ output:
         config_dict = {
             "source": {
                 "type": "csv",
-                "csv": {
-                    "file_path": "/data/test.csv",
-                    "date_column": "date"
-                }
+                "csv": {"file_path": "/data/test.csv", "date_column": "date"},
             },
             "metadata": {
                 "dq_check_name": "Test",
                 "date_column": "date",
-                "id_column": "id"
+                "id_column": "id",
             },
             "checks": {},
-            "output": {
-                "formats": ["json"],
-                "destination": "/output"
-            }
+            "output": {"formats": ["json"], "destination": "/output"},
         }
 
         config = load_config(config_dict=config_dict)
@@ -302,7 +295,7 @@ output:
   file_prefix: complex_report
   include_passed_checks: true
 """
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             f.write(yaml_content)
             config_path = f.name
 
@@ -340,7 +333,7 @@ output:
   formats: [json]
   destination: /output
 """
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             f.write(yaml_content)
             config_path = f.name
 

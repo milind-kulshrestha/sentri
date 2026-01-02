@@ -1,11 +1,12 @@
 """Constants and enumerations for the Data Quality Framework."""
 
 from enum import Enum
-from typing import Dict, Any
+from typing import Any, Dict
 
 
 class CheckStatus(str, Enum):
     """Status of a data quality check."""
+
     PASS = "PASS"  # nosec B105
     WARNING = "WARNING"
     FAIL = "FAIL"
@@ -14,6 +15,7 @@ class CheckStatus(str, Enum):
 
 class Severity(str, Enum):
     """Severity level of a check result."""
+
     INFO = "INFO"
     WARNING = "WARNING"
     CRITICAL = "CRITICAL"
@@ -22,6 +24,7 @@ class Severity(str, Enum):
 
 class OutputFormat(str, Enum):
     """Supported output formats."""
+
     JSON = "json"
     HTML = "html"
     CSV = "csv"
@@ -30,6 +33,7 @@ class OutputFormat(str, Enum):
 
 class ConnectorType(str, Enum):
     """Supported data connector types."""
+
     ORACLE = "oracle"
     SNOWFLAKE = "snowflake"
     CSV = "csv"
@@ -38,6 +42,7 @@ class ConnectorType(str, Enum):
 
 class CheckType(str, Enum):
     """Supported check types."""
+
     COMPLETENESS = "completeness"
     TURNOVER = "turnover"
     UNIQUENESS = "uniqueness"
@@ -52,12 +57,14 @@ class CheckType(str, Enum):
 
 class CorrelationType(str, Enum):
     """Types of correlation checks."""
+
     TEMPORAL = "temporal"
     CROSS_COLUMN = "cross_column"
 
 
 class DriftMethod(str, Enum):
     """Methods for drift detection."""
+
     PSI = "psi"
     KS = "ks"
     JENSEN_SHANNON = "jensen_shannon"

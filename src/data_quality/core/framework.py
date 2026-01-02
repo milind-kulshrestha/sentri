@@ -1,8 +1,9 @@
 """Main Sentri data quality framework orchestration."""
 
-from typing import Any, Dict, Optional, Union
-import pandas as pd
 from pathlib import Path
+from typing import Any, Dict, Optional, Union
+
+import pandas as pd
 
 from data_quality.utils.logger import get_logger
 
@@ -43,12 +44,7 @@ class DataQualityFramework:
         self.check_manager = None
         self.output_manager = None
 
-    def run_checks(
-        self,
-        start_date: str,
-        end_date: str,
-        **kwargs
-    ) -> "DQResults":
+    def run_checks(self, start_date: str, end_date: str, **kwargs) -> "DQResults":
         """
         Run all configured data quality checks.
 
@@ -63,11 +59,7 @@ class DataQualityFramework:
         # Stub implementation - will be completed in later phases
         raise NotImplementedError("Will be implemented in Phase 4")
 
-    def run_check(
-        self,
-        check_type: str,
-        check_config: Dict[str, Any]
-    ) -> pd.DataFrame:
+    def run_check(self, check_type: str, check_config: Dict[str, Any]) -> pd.DataFrame:
         """
         Run a single check type programmatically.
 

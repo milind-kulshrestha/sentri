@@ -1,16 +1,18 @@
 """Tests for logging infrastructure."""
 
-import pytest
-import logging
 import json
-import tempfile
+import logging
 import os
+import tempfile
+
+import pytest
+
 from data_quality.utils.logger import (
-    get_logger,
-    setup_logging,
-    JSONFormatter,
     ContextAdapter,
+    JSONFormatter,
+    get_logger,
     log_with_context,
+    setup_logging,
 )
 
 
@@ -83,6 +85,7 @@ class TestJSONFormatter:
             raise ValueError("Test error")
         except ValueError:
             import sys
+
             exc_info = sys.exc_info()
 
         record = logging.LogRecord(
@@ -148,7 +151,7 @@ class TestSetupLogging:
 
     def test_setup_with_file_output(self):
         """Test setup with file output."""
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.log') as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".log") as f:
             log_file = f.name
 
         try:
@@ -204,36 +207,21 @@ class TestLogWithContext:
         logger = logging.getLogger("data_quality.test")
 
         # This should not raise
-        log_with_context(
-            logger,
-            "info",
-            "Test message",
-            {"key": "value"}
-        )
+        log_with_context(logger, "info", "Test message", {"key": "value"})
 
     def test_log_error_with_context(self):
         """Test logging error with context."""
         setup_logging(level="DEBUG")
         logger = logging.getLogger("data_quality.test")
 
-        log_with_context(
-            logger,
-            "error",
-            "Error message",
-            {"error_code": 500}
-        )
+        log_with_context(logger, "error", "Error message", {"error_code": 500})
 
     def test_log_without_context(self):
         """Test logging without context."""
         setup_logging(level="DEBUG")
         logger = logging.getLogger("data_quality.test")
 
-        log_with_context(
-            logger,
-            "warning",
-            "Warning message",
-            None
-        )
+        log_with_context(logger, "warning", "Warning message", None)
 
 
 class TestLoggingIntegration:
@@ -241,22 +229,18 @@ class TestLoggingIntegration:
 
     def test_full_logging_flow(self):
         """Test complete logging flow."""
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.log') as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".log") as f:
             log_file = f.name
 
         try:
-            setup_logging(
-                level="DEBUG",
-                log_format="json",
-                log_file=log_file
-            )
+            setup_logging(level="DEBUG", log_format="json", log_file=log_file)
 
             logger = get_logger("integration_test", {"test": True})
             logger.info("Test message")
             logger.error("Error message")
 
             # Read and verify log file
-            with open(log_file, 'r') as f:
+            with open(log_file, "r") as f:
                 lines = f.readlines()
                 assert len(lines) >= 2
 

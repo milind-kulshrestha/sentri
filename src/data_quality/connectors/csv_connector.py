@@ -1,7 +1,8 @@
 """CSV file data connector."""
 
 from pathlib import Path
-from typing import Optional, List
+from typing import List, Optional
+
 import pandas as pd
 
 from data_quality.connectors.base import DataConnector
@@ -25,7 +26,7 @@ class CSVConnector(DataConnector):
         delimiter: str = ",",
         date_format: Optional[str] = None,
         parse_dates: Optional[List[str]] = None,
-        **kwargs
+        **kwargs,
     ):
         """
         Initialize CSV connector.
@@ -46,7 +47,7 @@ class CSVConnector(DataConnector):
             delimiter=delimiter,
             date_format=date_format,
             parse_dates=parse_dates,
-            **kwargs
+            **kwargs,
         )
         self.file_path = Path(file_path)
         self.date_column = date_column.lower()
@@ -69,14 +70,14 @@ class CSVConnector(DataConnector):
             raise ConnectionError(
                 f"CSV file not found: {self.file_path}",
                 connector_type="csv",
-                context={"file_path": str(self.file_path)}
+                context={"file_path": str(self.file_path)},
             )
 
         if not self.file_path.is_file():
             raise ConnectionError(
                 f"Path is not a file: {self.file_path}",
                 connector_type="csv",
-                context={"file_path": str(self.file_path)}
+                context={"file_path": str(self.file_path)},
             )
 
         # Try to read first few rows to validate
@@ -85,24 +86,19 @@ class CSVConnector(DataConnector):
                 self.file_path,
                 encoding=self.encoding,
                 delimiter=self.delimiter,
-                nrows=5
+                nrows=5,
             )
         except Exception as e:
             raise ConnectionError(
                 f"Cannot read CSV file: {str(e)}",
                 connector_type="csv",
-                context={"file_path": str(self.file_path)}
+                context={"file_path": str(self.file_path)},
             )
 
         self.logger.info(f"CSV file validated: {self.file_path}")
         return True
 
-    def get_data(
-        self,
-        start_date: str,
-        end_date: str,
-        **kwargs
-    ) -> pd.DataFrame:
+    def get_data(self, start_date: str, end_date: str, **kwargs) -> pd.DataFrame:
         """
         Retrieve data from CSV file with date filtering.
 
@@ -120,7 +116,7 @@ class CSVConnector(DataConnector):
         try:
             self.logger.info(
                 f"Reading CSV file: {self.file_path}",
-                extra={"context": {"start_date": start_date, "end_date": end_date}}
+                extra={"context": {"start_date": start_date, "end_date": end_date}},
             )
 
             # Read CSV file
@@ -137,22 +133,18 @@ class CSVConnector(DataConnector):
             date_col_lower = self.date_column.lower()
             if date_col_lower in df.columns:
                 df[date_col_lower] = pd.to_datetime(
-                    df[date_col_lower],
-                    format=self.date_format
+                    df[date_col_lower], format=self.date_format
                 )
 
                 # Filter by date range
                 start = pd.to_datetime(start_date)
                 end = pd.to_datetime(end_date)
 
-                df = df[
-                    (df[date_col_lower] >= start) &
-                    (df[date_col_lower] <= end)
-                ]
+                df = df[(df[date_col_lower] >= start) & (df[date_col_lower] <= end)]
 
             self.logger.info(
                 f"Retrieved {len(df)} rows from CSV",
-                extra={"context": {"rows": len(df), "columns": len(df.columns)}}
+                extra={"context": {"rows": len(df), "columns": len(df.columns)}},
             )
 
             return df
@@ -160,7 +152,7 @@ class CSVConnector(DataConnector):
         except Exception as e:
             raise DataRetrievalError(
                 f"Failed to read CSV file: {str(e)}",
-                context={"file_path": str(self.file_path)}
+                context={"file_path": str(self.file_path)},
             )
 
     def close(self) -> None:

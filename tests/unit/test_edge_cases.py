@@ -1,17 +1,17 @@
 """Comprehensive edge case tests for data quality checks."""
 
+import numpy as np
 import pandas as pd
 import pytest
-import numpy as np
 
 from data_quality.checks.completeness import CompletenessCheck
-from data_quality.checks.uniqueness import UniquenessCheck
+from data_quality.checks.correlation import CorrelationCheck
 from data_quality.checks.range_check import RangeCheck
 from data_quality.checks.statistical import StatisticalCheck
-from data_quality.checks.correlation import CorrelationCheck
+from data_quality.checks.uniqueness import UniquenessCheck
+from data_quality.core.exceptions import FilterError
 from data_quality.managers.check_manager import CheckManager
 from data_quality.utils.constants import CheckStatus
-from data_quality.core.exceptions import FilterError
 
 # Import fixtures
 from tests.fixtures.test_fixtures import *
@@ -20,28 +20,30 @@ from tests.fixtures.test_fixtures import *
 class TestEdgeCasesCompleteness:
     """Edge case tests for CompletenessCheck."""
 
-    def test_completeness_with_inf_values(self, messy_data_df, basic_completeness_config):
+    def test_completeness_with_inf_values(
+        self, messy_data_df, basic_completeness_config
+    ):
         """Test completeness handling of infinite values."""
         check = CompletenessCheck(
             df=messy_data_df,
-            date_col="date", 
+            date_col="date",
             id_col="id",
-            check_config=basic_completeness_config
+            check_config=basic_completeness_config,
         )
-        
+
         results = check.run()
         assert len(results) > 0
         # Inf values should be treated as non-null
-        
+
     def test_completeness_empty_dataframe(self, empty_df, basic_completeness_config):
         """Test completeness with empty DataFrame."""
         check = CompletenessCheck(
             df=empty_df,
             date_col="date",
-            id_col="id", 
-            check_config=basic_completeness_config
+            id_col="id",
+            check_config=basic_completeness_config,
         )
-        
+
         results = check.run()
         # Empty dataframe may still return a result record with 0 metric
         assert len(results) >= 0
@@ -52,26 +54,30 @@ class TestEdgeCasesCompleteness:
             df=single_row_df,
             date_col="date",
             id_col="id",
-            check_config=basic_completeness_config
+            check_config=basic_completeness_config,
         )
-        
+
         results = check.run()
         assert len(results) > 0
         assert results.iloc[0]["metric_value"] == 0.0  # 100% complete
 
     def test_completeness_all_null_column(self):
         """Test completeness with completely null column."""
-        df = pd.DataFrame({
-            "id": [1, 2, 3],
-            "date": pd.to_datetime(["2025-01-01"] * 3),
-            "all_null": [None, np.nan, None]
-        })
-        
+        df = pd.DataFrame(
+            {
+                "id": [1, 2, 3],
+                "date": pd.to_datetime(["2025-01-01"] * 3),
+                "all_null": [None, np.nan, None],
+            }
+        )
+
         config = {"all_null": {"thresholds": {"absolute_critical": 0.5}}}
-        
-        check = CompletenessCheck(df=df, date_col="date", id_col="id", check_config=config)
+
+        check = CompletenessCheck(
+            df=df, date_col="date", id_col="id", check_config=config
+        )
         results = check.run()
-        
+
         assert len(results) > 0
         assert results.iloc[0]["metric_value"] == 1.0  # 100% missing
         assert results.iloc[0]["status"] == CheckStatus.FAIL
@@ -81,17 +87,21 @@ class TestEdgeCasesCompleteness:
         config = {
             "value": {
                 "thresholds": {"absolute_critical": 0.2},
-                "filter_condition": "invalid_column > 0"  # Column doesn't exist
+                "filter_condition": "invalid_column > 0",  # Column doesn't exist
             }
         }
-        
-        check = CompletenessCheck(df=basic_df, date_col="date", id_col="id", check_config=config)
-        
+
+        check = CompletenessCheck(
+            df=basic_df, date_col="date", id_col="id", check_config=config
+        )
+
         # May raise FilterError or handle gracefully with error result
         try:
             results = check.run()
             # If no exception, should have error result
-            assert any(r.get("status") == CheckStatus.ERROR for r in results.to_dict('records'))
+            assert any(
+                r.get("status") == CheckStatus.ERROR for r in results.to_dict("records")
+            )
         except FilterError:
             # Expected behavior
             pass
@@ -102,34 +112,42 @@ class TestEdgeCasesUniqueness:
 
     def test_uniqueness_all_duplicates(self):
         """Test uniqueness when all values are duplicates."""
-        df = pd.DataFrame({
-            "id": [1, 1, 1, 1, 1],  # All same value
-            "date": pd.to_datetime(["2025-01-01"] * 5),
-            "value": [42] * 5
-        })
-        
+        df = pd.DataFrame(
+            {
+                "id": [1, 1, 1, 1, 1],  # All same value
+                "date": pd.to_datetime(["2025-01-01"] * 5),
+                "value": [42] * 5,
+            }
+        )
+
         config = {"value": {"thresholds": {"absolute_critical": 0}}}
-        
-        check = UniquenessCheck(df=df, date_col="date", id_col="id", check_config=config)
+
+        check = UniquenessCheck(
+            df=df, date_col="date", id_col="id", check_config=config
+        )
         results = check.run()
-        
+
         assert len(results) > 0
         assert results.iloc[0]["metric_value"] == 4  # 4 duplicates
         assert results.iloc[0]["status"] == CheckStatus.FAIL
 
     def test_uniqueness_with_nulls(self):
         """Test uniqueness handling of null values."""
-        df = pd.DataFrame({
-            "id": [1, 2, 3, 4, 5],
-            "date": pd.to_datetime(["2025-01-01"] * 5),
-            "value": [10, None, 10, np.nan, 20]  # Nulls and duplicates
-        })
-        
+        df = pd.DataFrame(
+            {
+                "id": [1, 2, 3, 4, 5],
+                "date": pd.to_datetime(["2025-01-01"] * 5),
+                "value": [10, None, 10, np.nan, 20],  # Nulls and duplicates
+            }
+        )
+
         config = {"value": {"thresholds": {"absolute_critical": 0}}}
-        
-        check = UniquenessCheck(df=df, date_col="date", id_col="id", check_config=config)
+
+        check = UniquenessCheck(
+            df=df, date_col="date", id_col="id", check_config=config
+        )
         results = check.run()
-        
+
         assert len(results) > 0
         # Should find 1 duplicate (10 appears twice), nulls ignored
 
@@ -137,23 +155,22 @@ class TestEdgeCasesUniqueness:
         """Test uniqueness with extreme duplicate counts."""
         config = {
             "id": {"thresholds": {"absolute_critical": 1000}},  # Very high threshold
-            "exact_duplicate": {"thresholds": {"absolute_critical": 0}}  # Zero tolerance
+            "exact_duplicate": {
+                "thresholds": {"absolute_critical": 0}
+            },  # Zero tolerance
         }
-        
+
         check = UniquenessCheck(
-            df=duplicate_data_df,
-            date_col="date",
-            id_col="id", 
-            check_config=config
+            df=duplicate_data_df, date_col="date", id_col="id", check_config=config
         )
-        
+
         results = check.run()
         assert len(results) == 2
-        
+
         # ID check should pass (high threshold)
         id_result = results[results["column"] == "id"].iloc[0]
         assert id_result["status"] == CheckStatus.PASS
-        
+
         # Exact duplicate check should fail (zero threshold)
         dup_result = results[results["column"] == "exact_duplicate"].iloc[0]
         assert dup_result["status"] == CheckStatus.FAIL
@@ -165,62 +182,77 @@ class TestEdgeCasesRange:
     def test_range_with_extreme_values(self, extreme_values_df, range_check_config):
         """Test range check with extreme values."""
         # Add percentage column with extreme values
-        extreme_values_df["percentage"] = [-1000, 2000, np.inf, -np.inf, 50, 75, 1e10, -1e10, 0, 100]
-        
+        extreme_values_df["percentage"] = [
+            -1000,
+            2000,
+            np.inf,
+            -np.inf,
+            50,
+            75,
+            1e10,
+            -1e10,
+            0,
+            100,
+        ]
+
         check = RangeCheck(
             df=extreme_values_df,
             date_col="date",
             id_col="id",
-            check_config=range_check_config
+            check_config=range_check_config,
         )
-        
+
         results = check.run()
         assert len(results) > 0
-        
+
         # Should detect many out-of-range values
         percentage_result = results[results["column"] == "percentage"].iloc[0]
         assert percentage_result["status"] == CheckStatus.FAIL
 
     def test_range_min_equals_max(self):
         """Test range check where min equals max."""
-        df = pd.DataFrame({
-            "id": [1, 2, 3],
-            "date": pd.to_datetime(["2025-01-01"] * 3),
-            "value": [42, 42, 43]  # One value out of range
-        })
-        
+        df = pd.DataFrame(
+            {
+                "id": [1, 2, 3],
+                "date": pd.to_datetime(["2025-01-01"] * 3),
+                "value": [42, 42, 43],  # One value out of range
+            }
+        )
+
         config = {
             "value": {
                 "min_value": 42,
                 "max_value": 42,  # Exact value required
-                "description": "Must be exactly 42"
+                "description": "Must be exactly 42",
             }
         }
-        
+
         check = RangeCheck(df=df, date_col="date", id_col="id", check_config=config)
         results = check.run()
-        
+
         assert len(results) > 0
         assert results.iloc[0]["status"] == CheckStatus.FAIL  # 43 is out of range
 
     def test_range_no_bounds_specified(self):
         """Test range check with no min/max bounds."""
-        df = pd.DataFrame({
-            "id": [1, 2, 3],
-            "date": pd.to_datetime(["2025-01-01"] * 3),
-            "value": [10, 20, 30]
-        })
-        
+        df = pd.DataFrame(
+            {
+                "id": [1, 2, 3],
+                "date": pd.to_datetime(["2025-01-01"] * 3),
+                "value": [10, 20, 30],
+            }
+        )
+
         config = {
             "value": {
                 "description": "No bounds specified"
                 # No min_value or max_value
             }
         }
-        
+
         check = RangeCheck(df=df, date_col="date", id_col="id", check_config=config)
         results = check.run()
-        
+
         assert len(results) > 0
         assert results.iloc[0]["status"] == CheckStatus.PASS  # No bounds = always pass
 
@@ -233,24 +265,21 @@ class TestEdgeCasesStatistical:
         config = {
             "zero_variance": {
                 "measures": ["mean", "std", "min", "max"],
-                "thresholds": {}
+                "thresholds": {},
             }
         }
-        
+
         check = StatisticalCheck(
-            df=extreme_values_df,
-            date_col="date",
-            id_col="id",
-            check_config=config
+            df=extreme_values_df, date_col="date", id_col="id", check_config=config
         )
-        
+
         results = check.run()
         assert len(results) == 4
-        
+
         # Standard deviation should be 0
         std_result = results[results["measure"] == "std"].iloc[0]
         assert std_result["metric_value"] == 0.0
-        
+
         # Min and max should be equal
         min_result = results[results["measure"] == "min"].iloc[0]
         max_result = results[results["measure"] == "max"].iloc[0]
@@ -259,44 +288,42 @@ class TestEdgeCasesStatistical:
     def test_statistical_extreme_skew_kurtosis(self):
         """Test statistical measures with extreme skew/kurtosis."""
         # Create highly skewed data
-        df = pd.DataFrame({
-            "id": range(1, 101),
-            "date": pd.to_datetime(["2025-01-01"] * 100),
-            "skewed": [1] * 95 + [1000] * 5  # Highly right-skewed
-        })
-        
-        config = {
-            "skewed": {
-                "measures": ["skew", "kurtosis"],
-                "thresholds": {}
+        df = pd.DataFrame(
+            {
+                "id": range(1, 101),
+                "date": pd.to_datetime(["2025-01-01"] * 100),
+                "skewed": [1] * 95 + [1000] * 5,  # Highly right-skewed
             }
-        }
-        
-        check = StatisticalCheck(df=df, date_col="date", id_col="id", check_config=config)
+        )
+
+        config = {"skewed": {"measures": ["skew", "kurtosis"], "thresholds": {}}}
+
+        check = StatisticalCheck(
+            df=df, date_col="date", id_col="id", check_config=config
+        )
         results = check.run()
-        
+
         assert len(results) == 2
         skew_result = results[results["measure"] == "skew"].iloc[0]
         assert skew_result["metric_value"] > 2  # Highly skewed
 
     def test_statistical_insufficient_data_for_skew(self):
         """Test statistical measures with insufficient data for skew/kurtosis."""
-        df = pd.DataFrame({
-            "id": [1, 2],  # Only 2 rows
-            "date": pd.to_datetime(["2025-01-01"] * 2),
-            "value": [10, 20]
-        })
-        
-        config = {
-            "value": {
-                "measures": ["skew", "kurtosis"],
-                "thresholds": {}
+        df = pd.DataFrame(
+            {
+                "id": [1, 2],  # Only 2 rows
+                "date": pd.to_datetime(["2025-01-01"] * 2),
+                "value": [10, 20],
             }
-        }
-        
-        check = StatisticalCheck(df=df, date_col="date", id_col="id", check_config=config)
+        )
+
+        config = {"value": {"measures": ["skew", "kurtosis"], "thresholds": {}}}
+
+        check = StatisticalCheck(
+            df=df, date_col="date", id_col="id", check_config=config
+        )
         results = check.run()
-        
+
         assert len(results) == 2
         # Should return 0 for insufficient data
         skew_result = results[results["measure"] == "skew"].iloc[0]
@@ -312,57 +339,63 @@ class TestEdgeCasesCorrelation:
             "perfect_positive": {
                 "correlation_type": "cross_column",
                 "correlation_with": "x",
-                "thresholds": {"absolute_critical": 0.99}
+                "thresholds": {"absolute_critical": 0.99},
             }
         }
-        
+
         check = CorrelationCheck(
-            df=correlation_test_df,
-            date_col="date",
-            id_col="id",
-            check_config=config
+            df=correlation_test_df, date_col="date", id_col="id", check_config=config
         )
-        
+
         results = check.run()
         assert len(results) > 0
         assert abs(results.iloc[0]["metric_value"]) > 0.99  # Nearly perfect correlation
 
     def test_correlation_with_constant_values(self):
         """Test correlation when one column has constant values."""
-        df = pd.DataFrame({
-            "id": range(1, 11),
-            "date": pd.to_datetime(["2025-01-01"] * 10),
-            "constant": [42] * 10,  # No variance
-            "variable": range(1, 11)
-        })
-        
+        df = pd.DataFrame(
+            {
+                "id": range(1, 11),
+                "date": pd.to_datetime(["2025-01-01"] * 10),
+                "constant": [42] * 10,  # No variance
+                "variable": range(1, 11),
+            }
+        )
+
         config = {
             "variable": {
                 "correlation_type": "cross_column",
                 "correlation_with": "constant",
-                "thresholds": {"absolute_critical": 0.5}
+                "thresholds": {"absolute_critical": 0.5},
             }
         }
-        
-        check = CorrelationCheck(df=df, date_col="date", id_col="id", check_config=config)
+
+        check = CorrelationCheck(
+            df=df, date_col="date", id_col="id", check_config=config
+        )
         results = check.run()
-        
+
         assert len(results) > 0
         # Correlation with constant should be NaN, but check should handle it
-        assert pd.isna(results.iloc[0]["metric_value"]) or results.iloc[0]["metric_value"] == 0
+        assert (
+            pd.isna(results.iloc[0]["metric_value"])
+            or results.iloc[0]["metric_value"] == 0
+        )
 
     def test_correlation_temporal_single_date(self, basic_df):
         """Test temporal correlation with single date."""
         config = {
             "value": {
                 "correlation_type": "temporal",
-                "thresholds": {"absolute_critical": 0.8}
+                "thresholds": {"absolute_critical": 0.8},
             }
         }
-        
-        check = CorrelationCheck(df=basic_df, date_col="date", id_col="id", check_config=config)
+
+        check = CorrelationCheck(
+            df=basic_df, date_col="date", id_col="id", check_config=config
+        )
         results = check.run()
-        
+
         assert len(results) > 0
         assert results.iloc[0]["status"] == CheckStatus.PASS
         assert "Insufficient dates" in results.iloc[0]["additional_metrics"]["message"]
@@ -374,21 +407,17 @@ class TestEdgeCasesCheckManager:
     def test_check_manager_with_malformed_config(self, basic_df):
         """Test CheckManager with malformed configuration."""
         malformed_config = {
-            "invalid_check_type": {
-                "value": {"thresholds": {"absolute_critical": 0.1}}
-            }
+            "invalid_check_type": {"value": {"thresholds": {"absolute_critical": 0.1}}}
         }
-        
+
         metadata = {"date_column": "date", "id_column": "id"}
-        
+
         manager = CheckManager(
-            df=basic_df,
-            metadata=metadata,
-            checks_config=malformed_config
+            df=basic_df, metadata=metadata, checks_config=malformed_config
         )
-        
+
         results = manager.run_all_checks()
-        
+
         # Should handle unknown check type gracefully
         assert results["summary"]["total"] == 0
         assert results["summary"]["errors"] == 0
@@ -403,39 +432,29 @@ class TestEdgeCasesCheckManager:
                 }
             }
         }
-        
+
         metadata = {"date_column": "date", "id_column": "id"}
-        
+
         manager = CheckManager(
-            df=messy_data_df,
-            metadata=metadata,
-            checks_config=config
+            df=messy_data_df, metadata=metadata, checks_config=config
         )
-        
+
         results = manager.run_all_checks()
-        
+
         # Should capture errors in results
         assert results["summary"]["total"] > 0
         assert any(r.get("status") == CheckStatus.ERROR for r in results["results"])
 
     def test_check_manager_empty_dataframe(self, empty_df):
         """Test CheckManager with empty DataFrame."""
-        config = {
-            "completeness": {
-                "value": {"thresholds": {"absolute_critical": 0.1}}
-            }
-        }
-        
+        config = {"completeness": {"value": {"thresholds": {"absolute_critical": 0.1}}}}
+
         metadata = {"date_column": "date", "id_column": "id"}
-        
-        manager = CheckManager(
-            df=empty_df,
-            metadata=metadata,
-            checks_config=config
-        )
-        
+
+        manager = CheckManager(df=empty_df, metadata=metadata, checks_config=config)
+
         results = manager.run_all_checks()
-        
+
         # Should handle empty data gracefully - may return 0 or 1 result
         assert results["summary"]["total"] >= 0
 
@@ -445,20 +464,16 @@ class TestEdgeCasesCheckManager:
             "completeness": {
                 "missing_col1": {"thresholds": {"absolute_critical": 0.1}},
                 "missing_col2": {"thresholds": {"absolute_critical": 0.1}},
-                "missing_col3": {"thresholds": {"absolute_critical": 0.1}}
+                "missing_col3": {"thresholds": {"absolute_critical": 0.1}},
             }
         }
-        
+
         metadata = {"date_column": "date", "id_column": "id"}
-        
-        manager = CheckManager(
-            df=basic_df,
-            metadata=metadata,
-            checks_config=config
-        )
-        
+
+        manager = CheckManager(df=basic_df, metadata=metadata, checks_config=config)
+
         results = manager.run_all_checks_parallel(max_workers=2)
-        
+
         # Should handle parallel errors gracefully
         assert "summary" in results
         assert "results" in results

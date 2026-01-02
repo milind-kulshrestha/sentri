@@ -1,8 +1,9 @@
 """JSON output formatter."""
 
 import json
-from typing import Any, Dict, Optional
 from pathlib import Path
+from typing import Any, Dict, Optional
+
 import pandas as pd
 
 from data_quality.utils.logger import get_logger
@@ -55,13 +56,13 @@ class JSONFormatter:
     def _make_serializable(self, obj: Any) -> Any:
         """Convert object to JSON-serializable format."""
         if isinstance(obj, pd.DataFrame):
-            return obj.to_dict(orient='records')
+            return obj.to_dict(orient="records")
         elif isinstance(obj, dict):
             return {k: self._make_serializable(v) for k, v in obj.items()}
         elif isinstance(obj, list):
             return [self._make_serializable(item) for item in obj]
         elif isinstance(obj, (pd.Timestamp, pd.Timedelta)):
             return str(obj)
-        elif hasattr(obj, 'value'):  # Enum
+        elif hasattr(obj, "value"):  # Enum
             return obj.value
         return obj

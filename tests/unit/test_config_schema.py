@@ -2,20 +2,21 @@
 
 import pytest
 from pydantic import ValidationError
+
 from data_quality.core.config_schema import (
-    ThresholdConfig,
     ColumnCheckConfig,
     CompletenessCheckConfig,
+    CSVSourceConfig,
+    DQConfig,
+    MetadataConfig,
+    OracleSourceConfig,
+    OutputConfig,
+    RangeCheckConfig,
+    SnowflakeSourceConfig,
+    SourceConfig,
+    ThresholdConfig,
     TurnoverCheckConfig,
     UniquenessCheckConfig,
-    RangeCheckConfig,
-    SourceConfig,
-    OracleSourceConfig,
-    SnowflakeSourceConfig,
-    CSVSourceConfig,
-    MetadataConfig,
-    OutputConfig,
-    DQConfig,
 )
 
 
@@ -24,19 +25,14 @@ class TestThresholdConfig:
 
     def test_valid_absolute_thresholds(self):
         """Test valid absolute thresholds."""
-        config = ThresholdConfig(
-            absolute_critical=0.05,
-            absolute_warning=0.02
-        )
+        config = ThresholdConfig(absolute_critical=0.05, absolute_warning=0.02)
         assert config.absolute_critical == 0.05
         assert config.absolute_warning == 0.02
 
     def test_valid_delta_thresholds(self):
         """Test valid delta thresholds."""
         config = ThresholdConfig(
-            absolute_critical=0.05,
-            delta_critical=0.03,
-            delta_warning=0.01
+            absolute_critical=0.05, delta_critical=0.03, delta_warning=0.01
         )
         assert config.delta_critical == 0.03
         assert config.delta_warning == 0.01
@@ -58,8 +54,7 @@ class TestColumnCheckConfig:
     def test_valid_column_config(self):
         """Test valid column check configuration."""
         config = ColumnCheckConfig(
-            thresholds=ThresholdConfig(absolute_critical=0.05),
-            description="Test check"
+            thresholds=ThresholdConfig(absolute_critical=0.05), description="Test check"
         )
         assert config.thresholds.absolute_critical == 0.05
         assert config.description == "Test check"
@@ -68,7 +63,7 @@ class TestColumnCheckConfig:
         """Test with filter condition."""
         config = ColumnCheckConfig(
             thresholds=ThresholdConfig(absolute_critical=0.05),
-            filter_condition="universe == 'US'"
+            filter_condition="universe == 'US'",
         )
         assert config.filter_condition == "universe == 'US'"
 
@@ -76,15 +71,13 @@ class TestColumnCheckConfig:
         """Test with column alias."""
         config = ColumnCheckConfig(
             thresholds=ThresholdConfig(absolute_critical=0.05),
-            column_alias="carbon_em_us"
+            column_alias="carbon_em_us",
         )
         assert config.column_alias == "carbon_em_us"
 
     def test_enabled_default_true(self):
         """Test that enabled defaults to True."""
-        config = ColumnCheckConfig(
-            thresholds=ThresholdConfig(absolute_critical=0.05)
-        )
+        config = ColumnCheckConfig(thresholds=ThresholdConfig(absolute_critical=0.05))
         assert config.enabled is True
 
 
@@ -94,8 +87,7 @@ class TestCompletenessCheckConfig:
     def test_valid_completeness_config(self):
         """Test valid completeness check config."""
         config = CompletenessCheckConfig(
-            thresholds=ThresholdConfig(absolute_critical=0.05),
-            compare_to="previous"
+            thresholds=ThresholdConfig(absolute_critical=0.05), compare_to="previous"
         )
         assert config.compare_to == "previous"
 
@@ -105,10 +97,7 @@ class TestRangeCheckConfig:
 
     def test_valid_range_config(self):
         """Test valid range check config."""
-        config = RangeCheckConfig(
-            min_value=0,
-            max_value=10
-        )
+        config = RangeCheckConfig(min_value=0, max_value=10)
         assert config.min_value == 0
         assert config.max_value == 10
 
@@ -137,8 +126,7 @@ class TestSourceConfig:
     def test_csv_source_config(self):
         """Test CSV source configuration."""
         config = CSVSourceConfig(
-            file_path="/data/test.csv",
-            date_column="effective_date"
+            file_path="/data/test.csv", date_column="effective_date"
         )
         assert config.file_path == "/data/test.csv"
         assert config.encoding == "utf-8"  # default
@@ -150,7 +138,7 @@ class TestSourceConfig:
             file_path="/data/test.csv",
             encoding="latin-1",
             delimiter=";",
-            date_column="date"
+            date_column="date",
         )
         assert config.encoding == "latin-1"
         assert config.delimiter == ";"
@@ -163,7 +151,7 @@ class TestSourceConfig:
             service_name="orcl",
             username="user",
             password="pass",
-            sql="SELECT * FROM table"
+            sql="SELECT * FROM table",
         )
         assert config.host == "localhost"
         assert config.port == 1521
@@ -178,7 +166,7 @@ class TestSourceConfig:
             schema_name="public",
             username="user",
             password="pass",
-            sql="SELECT * FROM table"
+            sql="SELECT * FROM table",
         )
         assert config.account == "myaccount"
         assert config.warehouse == "compute_wh"
@@ -188,10 +176,7 @@ class TestSourceConfig:
         """Test SourceConfig with CSV type."""
         config = SourceConfig(
             type="csv",
-            csv=CSVSourceConfig(
-                file_path="/data/test.csv",
-                date_column="date"
-            )
+            csv=CSVSourceConfig(file_path="/data/test.csv", date_column="date"),
         )
         assert config.type == "csv"
         assert config.csv is not None
@@ -201,7 +186,7 @@ class TestSourceConfig:
         with pytest.raises(ValidationError):
             SourceConfig(
                 type="oracle",
-                csv=CSVSourceConfig(file_path="/data/test.csv", date_column="date")
+                csv=CSVSourceConfig(file_path="/data/test.csv", date_column="date"),
             )
 
 
@@ -213,7 +198,7 @@ class TestMetadataConfig:
         config = MetadataConfig(
             dq_check_name="Test Check",
             date_column="effective_date",
-            id_column="entity_id"
+            id_column="entity_id",
         )
         assert config.dq_check_name == "Test Check"
         assert config.date_column == "effective_date"
@@ -222,9 +207,7 @@ class TestMetadataConfig:
     def test_optional_description(self):
         """Test that description is optional."""
         config = MetadataConfig(
-            dq_check_name="Test",
-            date_column="date",
-            id_column="id"
+            dq_check_name="Test", date_column="date", id_column="id"
         )
         assert config.description is None
 
@@ -234,27 +217,18 @@ class TestOutputConfig:
 
     def test_valid_output_config(self):
         """Test valid output configuration."""
-        config = OutputConfig(
-            formats=["json", "html"],
-            destination="/output"
-        )
+        config = OutputConfig(formats=["json", "html"], destination="/output")
         assert "json" in config.formats
         assert config.destination == "/output"
 
     def test_invalid_format(self):
         """Test that invalid format raises error."""
         with pytest.raises(ValidationError):
-            OutputConfig(
-                formats=["json", "invalid_format"],
-                destination="/output"
-            )
+            OutputConfig(formats=["json", "invalid_format"], destination="/output")
 
     def test_default_options(self):
         """Test default output options."""
-        config = OutputConfig(
-            formats=["json"],
-            destination="/output"
-        )
+        config = OutputConfig(formats=["json"], destination="/output")
         assert config.include_passed_checks is True
         assert config.file_prefix == "dq_report"
 
@@ -267,21 +241,13 @@ class TestDQConfig:
         config = DQConfig(
             source=SourceConfig(
                 type="csv",
-                csv=CSVSourceConfig(
-                    file_path="/data/test.csv",
-                    date_column="date"
-                )
+                csv=CSVSourceConfig(file_path="/data/test.csv", date_column="date"),
             ),
             metadata=MetadataConfig(
-                dq_check_name="Test",
-                date_column="date",
-                id_column="id"
+                dq_check_name="Test", date_column="date", id_column="id"
             ),
             checks={},
-            output=OutputConfig(
-                formats=["json"],
-                destination="/output"
-            )
+            output=OutputConfig(formats=["json"], destination="/output"),
         )
         assert config.source.type == "csv"
         assert config.metadata.dq_check_name == "Test"
@@ -291,26 +257,14 @@ class TestDQConfig:
         config = DQConfig(
             source=SourceConfig(
                 type="csv",
-                csv=CSVSourceConfig(
-                    file_path="/data/test.csv",
-                    date_column="date"
-                )
+                csv=CSVSourceConfig(file_path="/data/test.csv", date_column="date"),
             ),
             metadata=MetadataConfig(
-                dq_check_name="Test",
-                date_column="date",
-                id_column="id"
+                dq_check_name="Test", date_column="date", id_column="id"
             ),
             checks={
-                "completeness": {
-                    "column1": {
-                        "thresholds": {"absolute_critical": 0.05}
-                    }
-                }
+                "completeness": {"column1": {"thresholds": {"absolute_critical": 0.05}}}
             },
-            output=OutputConfig(
-                formats=["json"],
-                destination="/output"
-            )
+            output=OutputConfig(formats=["json"], destination="/output"),
         )
         assert "completeness" in config.checks

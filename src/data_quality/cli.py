@@ -5,76 +5,60 @@ import sys
 from pathlib import Path
 from typing import Optional
 
+from data_quality.connectors import CSVConnector, get_connector
 from data_quality.core.config_loader import load_config
 from data_quality.core.framework import DataQualityFramework
-from data_quality.connectors import CSVConnector, get_connector
-from data_quality.managers import CheckManager
 from data_quality.formatters import OutputManager
-from data_quality.utils.logger import setup_logging, get_logger
+from data_quality.managers import CheckManager
 from data_quality.utils.constants import CheckStatus
+from data_quality.utils.logger import get_logger, setup_logging
 from data_quality.version import __version__
 
 
 def create_parser() -> argparse.ArgumentParser:
     """Create argument parser."""
     parser = argparse.ArgumentParser(
-        prog='dq-check',
-        description='Sentri - Run data quality checks'
+        prog="dq-check", description="Sentri - Run data quality checks"
     )
 
     parser.add_argument(
-        '--version',
-        action='version',
-        version=f'%(prog)s {__version__}'
+        "--version", action="version", version=f"%(prog)s {__version__}"
     )
 
     parser.add_argument(
-        '-c', '--config',
-        required=True,
-        help='Path to configuration YAML file'
+        "-c", "--config", required=True, help="Path to configuration YAML file"
+    )
+
+    parser.add_argument("--start-date", required=True, help="Start date (YYYY-MM-DD)")
+
+    parser.add_argument("--end-date", required=True, help="End date (YYYY-MM-DD)")
+
+    parser.add_argument("-o", "--output", help="Output directory (overrides config)")
+
+    parser.add_argument(
+        "--log-level",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR"],
+        default="INFO",
+        help="Logging level (default: INFO)",
     )
 
     parser.add_argument(
-        '--start-date',
-        required=True,
-        help='Start date (YYYY-MM-DD)'
+        "--log-format",
+        choices=["text", "json"],
+        default="text",
+        help="Log output format (default: text)",
     )
 
     parser.add_argument(
-        '--end-date',
-        required=True,
-        help='End date (YYYY-MM-DD)'
+        "--exit-on-failure",
+        action="store_true",
+        help="Exit with code 1 if any checks fail",
     )
 
     parser.add_argument(
-        '-o', '--output',
-        help='Output directory (overrides config)'
-    )
-
-    parser.add_argument(
-        '--log-level',
-        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
-        default='INFO',
-        help='Logging level (default: INFO)'
-    )
-
-    parser.add_argument(
-        '--log-format',
-        choices=['text', 'json'],
-        default='text',
-        help='Log output format (default: text)'
-    )
-
-    parser.add_argument(
-        '--exit-on-failure',
-        action='store_true',
-        help='Exit with code 1 if any checks fail'
-    )
-
-    parser.add_argument(
-        '--exit-on-warning',
-        action='store_true',
-        help='Exit with code 1 if any checks warn'
+        "--exit-on-warning",
+        action="store_true",
+        help="Exit with code 1 if any checks warn",
     )
 
     return parser
@@ -94,10 +78,7 @@ def main(args: Optional[list] = None) -> int:
     parsed_args = parser.parse_args(args)
 
     # Setup logging
-    setup_logging(
-        level=parsed_args.log_level,
-        log_format=parsed_args.log_format
-    )
+    setup_logging(level=parsed_args.log_level, log_format=parsed_args.log_format)
 
     logger = get_logger("cli")
     logger.info(f"Sentri v{__version__}")
@@ -116,15 +97,17 @@ def main(args: Optional[list] = None) -> int:
             return 1
 
         # Initialize connector based on type
-        if connector_type == 'csv':
+        if connector_type == "csv":
             connector = connector_class(
                 file_path=config.source.csv.file_path,
                 date_column=config.source.csv.date_column,
                 encoding=config.source.csv.encoding,
-                delimiter=config.source.csv.delimiter
+                delimiter=config.source.csv.delimiter,
             )
         else:
-            logger.error(f"Connector type '{connector_type}' not yet implemented in CLI")
+            logger.error(
+                f"Connector type '{connector_type}' not yet implemented in CLI"
+            )
             return 1
 
         # Validate connection
@@ -132,10 +115,11 @@ def main(args: Optional[list] = None) -> int:
         connector.validate_connection()
 
         # Get data
-        logger.info(f"Retrieving data from {parsed_args.start_date} to {parsed_args.end_date}")
+        logger.info(
+            f"Retrieving data from {parsed_args.start_date} to {parsed_args.end_date}"
+        )
         df = connector.get_data(
-            start_date=parsed_args.start_date,
-            end_date=parsed_args.end_date
+            start_date=parsed_args.start_date, end_date=parsed_args.end_date
         )
 
         logger.info(f"Retrieved {len(df)} rows, {len(df.columns)} columns")
@@ -146,24 +130,20 @@ def main(args: Optional[list] = None) -> int:
         # Run checks
         logger.info("Running data quality checks...")
         metadata = {
-            'dq_check_name': config.metadata.dq_check_name,
-            'date_column': config.metadata.date_column,
-            'id_column': config.metadata.id_column
+            "dq_check_name": config.metadata.dq_check_name,
+            "date_column": config.metadata.date_column,
+            "id_column": config.metadata.id_column,
         }
 
-        manager = CheckManager(
-            df=df,
-            metadata=metadata,
-            checks_config=config.checks
-        )
+        manager = CheckManager(df=df, metadata=metadata, checks_config=config.checks)
 
         results = manager.run_all_checks()
 
         # Display summary
-        summary = results['summary']
-        logger.info("="*50)
+        summary = results["summary"]
+        logger.info("=" * 50)
         logger.info("DQ Check Summary")
-        logger.info("="*50)
+        logger.info("=" * 50)
         logger.info(f"Total Checks: {summary['total']}")
         logger.info(f"Passed: {summary['passed']}")
         logger.info(f"Warnings: {summary['warnings']}")
@@ -178,12 +158,11 @@ def main(args: Optional[list] = None) -> int:
             file_prefix=config.output.file_prefix,
             include_timestamp=config.output.include_timestamp,
             include_check_name=config.output.include_check_name,
-            pretty_print=config.output.pretty_print
+            pretty_print=config.output.pretty_print,
         )
 
         output_paths = output_mgr.generate_outputs(
-            results,
-            config.metadata.dq_check_name
+            results, config.metadata.dq_check_name
         )
 
         logger.info("Output files generated:")
@@ -194,10 +173,10 @@ def main(args: Optional[list] = None) -> int:
         # Determine exit code
         exit_code = 0
 
-        if parsed_args.exit_on_failure and summary['failed'] > 0:
+        if parsed_args.exit_on_failure and summary["failed"] > 0:
             logger.error(f"{summary['failed']} check(s) failed")
             exit_code = 1
-        elif parsed_args.exit_on_warning and summary['warnings'] > 0:
+        elif parsed_args.exit_on_warning and summary["warnings"] > 0:
             logger.warning(f"{summary['warnings']} check(s) have warnings")
             exit_code = 1
 
@@ -211,5 +190,5 @@ def main(args: Optional[list] = None) -> int:
         return 1
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())
